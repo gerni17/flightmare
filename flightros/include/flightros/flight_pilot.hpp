@@ -2,10 +2,16 @@
 #pragma once
 
 #include <memory>
+#include <vector>
+
+#define ImageFloatType float
 
 // ros
+#include <cv_bridge/cv_bridge.h>
+#include <image_transport/image_transport.h>
 #include <nav_msgs/Odometry.h>
 #include <ros/ros.h>
+#include <sensor_msgs/Image.h>
 
 // rpg quadrotor
 #include <autopilot/autopilot_helper.h>
@@ -21,6 +27,7 @@
 #include "flightlib/sensors/rgb_camera.hpp"
 
 using namespace flightlib;
+using OpticFlow = cv::Mat_<cv::Vec<ImageFloatType, 2>>;
 
 namespace flightros {
 
@@ -43,7 +50,11 @@ class FlightPilot {
   ros::NodeHandle nh_;
   ros::NodeHandle pnh_;
 
+  image_transport::ImageTransport my_image_transport;
+
   // publisher
+  image_transport::Publisher rgb_pub_;
+  image_transport::Publisher of_pub_;
 
   // subscriber
   ros::Subscriber sub_state_est_;
@@ -66,5 +77,6 @@ class FlightPilot {
 
   // auxiliary variables
   Scalar main_loop_freq_{50.0};
+  int counter = 0;
 };
 }  // namespace flightros

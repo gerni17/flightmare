@@ -88,7 +88,7 @@ class UnityBridge {
   int64_t u_packet_latency_;
 
   // axuiliary variables
-  const Scalar unity_connection_time_out_{10.0};
+  const Scalar unity_connection_time_out_{1000.0};
   bool unity_ready_{false};
 };
 }  // namespace flightlib
