@@ -1,8 +1,10 @@
 
 #pragma once
 
+#include <fstream>
 #include <memory>
 #include <vector>
+
 
 #define ImageFloatType float
 
@@ -44,6 +46,11 @@ class FlightPilot {
   bool setUnity(const bool render);
   bool connectUnity(void);
   bool loadParams(void);
+  void writeCSV(std::string filename, cv::Mat m);
+  void calcopticalFlow();
+  void saveCSV();
+  void saveImages();
+  void calculateHist(cv::Mat bgr_planes[3]);
 
  private:
   // ros nodes
@@ -55,6 +62,7 @@ class FlightPilot {
   // publisher
   image_transport::Publisher rgb_pub_;
   image_transport::Publisher of_pub_;
+  image_transport::Publisher cv_pub_;
 
   // subscriber
   ros::Subscriber sub_state_est_;
@@ -74,6 +82,10 @@ class FlightPilot {
   bool unity_render_{false};
   RenderMessage_t unity_output_;
   uint16_t receive_id_{0};
+
+  cv::Mat prev, curr, bgr_, rgb_img;
+  cv::Mat bgr[3];
+  cv::Mat optical_flow_image;
 
   // auxiliary variables
   Scalar main_loop_freq_{50.0};
