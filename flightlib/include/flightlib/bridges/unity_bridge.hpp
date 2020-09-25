@@ -1,3 +1,7 @@
+//
+// This bridge was originally from FlightGoggles.
+// We made several changes on top of it.
+//
 #pragma once
 
 // std libs
@@ -20,6 +24,7 @@
 #include "flightlib/common/quad_state.hpp"
 #include "flightlib/common/types.hpp"
 #include "flightlib/objects/quadrotor.hpp"
+#include "flightlib/objects/static_object.hpp"
 #include "flightlib/objects/unity_camera.hpp"
 #include "flightlib/sensors/rgb_camera.hpp"
 
@@ -49,6 +54,7 @@ class UnityBridge {
   // add object
   bool addQuadrotor(std::shared_ptr<Quadrotor> quad);
   bool addCamera(std::shared_ptr<UnityCamera> unity_camera);
+  bool addStaticObject(std::shared_ptr<StaticObject> static_object);
 
   // public auxiliary functions
   inline void setPubPort(const std::string &pub_port) { pub_port_ = pub_port; };
@@ -70,6 +76,7 @@ class UnityBridge {
 
   std::vector<std::shared_ptr<Quadrotor>> unity_quadrotors_;
   std::vector<std::shared_ptr<RGBCamera>> rgb_cameras_;
+  std::vector<std::shared_ptr<StaticObject>> static_objects_;
 
   // ZMQ variables and functions
   std::string client_address_;
