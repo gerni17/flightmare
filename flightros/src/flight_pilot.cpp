@@ -1,5 +1,6 @@
 #include "flightros/flight_pilot.hpp"
 
+
 namespace flightros {
 
 FlightPilot::FlightPilot(const ros::NodeHandle &nh, const ros::NodeHandle &pnh)
@@ -18,7 +19,6 @@ FlightPilot::FlightPilot(const ros::NodeHandle &nh, const ros::NodeHandle &pnh)
   } else {
     ROS_INFO("[%s] Loaded all parameters.", pnh_.getNamespace().c_str());
   }
-
 
   // quad initialization
   quad_ptr_ = std::make_shared<Quadrotor>();
@@ -84,9 +84,9 @@ void FlightPilot::poseCallback(const nav_msgs::Odometry::ConstPtr &msg) {
     // bgr->pop_back();
 
     // // // calculate the opticalflow with opencv
-    if (counter != 0) {
-      calcopticalFlow();
-    }
+    // if (counter != 0) {
+    //   calcopticalFlow();
+    // }
     cv::cvtColor(rgb_img, prev, cv::COLOR_BGR2GRAY);
 
 
@@ -99,9 +99,14 @@ void FlightPilot::poseCallback(const nav_msgs::Odometry::ConstPtr &msg) {
     rgb_pub_.publish(rgb_msg);
     of_pub_.publish(of_msg);
 
+    // saveImages();
+    if(counter%100==0){
+      auto time = std::chrono::system_clock::now();
+      std::time_t end_time = std::chrono::system_clock::to_time_t(time);
+      ROS_INFO_STREAM("time "<<std::ctime(&end_time));
+    }
     saveImages();
-
-    saveCSV();  // only useful if checking the motion vectors
+    // saveCSV();  // only useful if checking the motion vectors
     counter++;
   }
 }
@@ -158,9 +163,9 @@ void FlightPilot::saveImages() {
   ROS_INFO_STREAM("written to " << path);
   cv::imwrite(path_rgb, rgb_img);
   cv::imwrite(path, optical_flow_image);
-  std::string path_ = "/home/gian/flightmare/calculated_of/calculated_img_" +
-                      std::to_string(counter) + ".png";
-  cv::imwrite(path_, bgr_);
+  // std::string path_ = "/home/gian/flightmare/calculated_of/calculated_img_" +
+  //                     std::to_string(counter) + ".png";
+  // cv::imwrite(path_, bgr_);
 }
 
 void FlightPilot::mainLoopCallback(const ros::TimerEvent &event) {

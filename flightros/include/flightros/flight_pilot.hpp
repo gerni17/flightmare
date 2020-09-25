@@ -4,7 +4,8 @@
 #include <fstream>
 #include <memory>
 #include <vector>
-
+#include <ctime>
+#include <chrono>
 
 #define ImageFloatType float
 
