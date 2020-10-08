@@ -1,11 +1,11 @@
 
 #pragma once
 
+#include <chrono>
+#include <ctime>
 #include <fstream>
 #include <memory>
 #include <vector>
-#include <ctime>
-#include <chrono>
 
 #define ImageFloatType float
 
@@ -28,6 +28,7 @@
 #include "flightlib/common/types.hpp"
 #include "flightlib/objects/quadrotor.hpp"
 #include "flightlib/sensors/rgb_camera.hpp"
+#include "flightlib/sensors/event_camera.hpp"
 
 using namespace flightlib;
 using OpticFlow = cv::Mat_<cv::Vec<ImageFloatType, 2>>;
@@ -74,6 +75,7 @@ class FlightPilot {
   // unity quadrotor
   std::shared_ptr<Quadrotor> quad_ptr_;
   std::shared_ptr<RGBCamera> rgb_camera_;
+  std::shared_ptr<EventCamera> event_camera_;
   QuadState quad_state_;
 
   // Flightmare(Unity3D)

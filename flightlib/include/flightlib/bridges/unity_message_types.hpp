@@ -50,6 +50,28 @@ struct Camera_t {
                            0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
 };
 
+// // Unity Event Camera, should not be used alone.
+// // has to be attached on a vehicle.
+// // Not sure if needed
+// struct eCamera_t {
+//   std::string ID;
+//   // frame Metadata
+//   int channels{3};
+//   int width{1024};
+//   int height{768};
+//   Scalar fov{70.0f};
+//   Scalar depth_scale{0.20};  // 0.xx corresponds to xx cm resolution
+//   // metadata
+//   bool is_depth{false};
+//   int output_index{0};
+//   //
+//   std::vector<bool> enabled_layers;
+//   // Transformation matrix from camera to vehicle body 4 x 4
+//   // use 1-D vector for json convention
+//   std::vector<Scalar> T_BC{0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+//                            0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+// };
+
 struct Lidar_t {
   std::string ID;
   int num_beams{10};
@@ -72,6 +94,7 @@ struct Vehicle_t {
   std::vector<Scalar> size{1.0, 1.0, 1.0};  // scale
   // sensors attached on the vehicle
   std::vector<Camera_t> cameras;
+  std::vector<Camera_t> eventcameras;
   std::vector<Lidar_t> lidars;
   // collision check
   bool has_collision_check = true;

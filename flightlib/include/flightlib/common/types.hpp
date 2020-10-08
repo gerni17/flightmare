@@ -1,6 +1,12 @@
 #pragma once
 
+#include <memory>
 #include <eigen3/Eigen/Eigen>
+// #include <cstdio>
+// #include <stdint.h>
+// #include <cinttypes>
+// #include <ze/common/transformation.hpp>
+
 
 namespace flightlib {
 
@@ -54,6 +60,13 @@ using Quaternion = Eigen::Quaternion<Scalar>;
 template<class Derived>
 using Ref = Eigen::Ref<Derived>;
 
+// Using time for events
+// using Time = ze::int64_t;
+// using uint16_t = ze::uint16_t;
+// using uint16_t =std::unit16_t;
+// using Time = std::int64_t;
+
+
 // // Using `ConstRef` for constant references.
 // template<class Derived>
 // using ConstRef = const Eigen::Ref<const Derived>;
@@ -64,5 +77,23 @@ using Map = Eigen::Map<Derived>;
 
 static constexpr Scalar Gz = -9.81;
 const Vector<3> GVEC{0.0, 0.0, Gz};
+
+// struct Event
+// {
+//   Event(uint16_t x, uint16_t y, Time t, bool pol)
+//     : x(x),
+//       y(y),
+//       t(t),
+//       pol(pol)
+//   {
+
+//   }
+
+//   uint16_t x;
+//   uint16_t y;
+//   Time t;
+//   bool pol;
+// };
+
 
 }  // namespace flightlib

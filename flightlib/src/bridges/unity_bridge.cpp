@@ -81,6 +81,7 @@ bool UnityBridge::sendInitialSettings(void) {
   msg << "Pose";
   // create JSON object for initial settings
   json json_mesg = settings_;
+  std::cout<<settings_.vehicles[0].eventcameras.size();
   msg << json_mesg.dump();
   // send message without blocking
   pub_.send(msg, true);
@@ -123,6 +124,33 @@ bool UnityBridge::getRender(const FrameID frame_id) {
   zmqpp::message msg;
   // add topic header
   msg << "Pose";
+  // create JSON object for pose update and append
+  json json_msg = pub_msg_;
+  msg << json_msg.dump();
+  // send message without blocking
+  pub_.send(msg, true);
+  return true;
+}
+
+bool UnityBridge::trigggerEvents(const FrameID frame_id) {
+  pub_msg_.frame_id = frame_id;
+  QuadState quad_state;
+  for (size_t idx = 0; idx < pub_msg_.vehicles.size(); idx++) {
+    unity_quadrotors_[idx]->getState(&quad_state);
+    pub_msg_.vehicles[idx].position = positionRos2Unity(quad_state.p);
+    pub_msg_.vehicles[idx].rotation = quaternionRos2Unity(quad_state.q());
+  }
+
+  // for (size_t idx = 0; idx < pub_msg_.objects.size(); idx++) {
+  //   std::shared_ptr<DynamicGate<T>> gate = unity_dynamic_gate_[object_i.ID];
+  //   pub_msg_.objects[idx].position = positionROS2Unity(gate->getPos());
+  //   pub_msg_.objects[idx].rotation = rotationROS2Unity(gate->getQuat());
+  // }
+
+  // create new message object
+  zmqpp::message msg;
+  // add topic header
+  msg << "Event";
   // create JSON object for pose update and append
   json json_msg = pub_msg_;
   msg << json_msg.dump();
@@ -175,6 +203,26 @@ bool UnityBridge::addQuadrotor(std::shared_ptr<Quadrotor> quad) {
     // add rgb_cameras
     rgb_cameras_.push_back(rgb_cameras[cam_idx]);
   }
+  
+  std::vector<std::shared_ptr<EventCamera>> event_cameras =
+    quad->getEventCameras();
+  for (size_t cam_idx = 0; cam_idx < event_cameras.size(); cam_idx++) {
+    std::shared_ptr<EventCamera> cam = event_cameras[cam_idx];
+    Camera_t camera_t;
+    camera_t.ID = vehicle_t.ID + "_" + std::to_string(cam_idx);
+    camera_t.T_BC =
+      transformationRos2Unity(event_cameras[cam_idx]->getRelPose());
+    camera_t.width = event_cameras[cam_idx]->getWidth();
+    camera_t.height = event_cameras[cam_idx]->getHeight();
+    camera_t.fov = event_cameras[cam_idx]->getFOV();
+    camera_t.is_depth = false;
+    camera_t.output_index = cam_idx;
+    // vehicle_t.eventcameras.push_back(camera_t);
+
+    // add event_cameras
+    event_cameras_.push_back(event_cameras[cam_idx]);
+  }
+
   unity_quadrotors_.push_back(quad);
 
   //
@@ -236,13 +284,39 @@ bool UnityBridge::handleOutput() {
         if (cam.channels == 3) {
           cv::cvtColor(new_image, new_image, CV_RGB2BGR);
         }
-        unity_quadrotors_[idx]->getCameras()[cam.output_index]->feedImageQueue(
-          layer_idx, new_image);
+        unity_quadrotors_[idx]->getCameras()[cam.output_index]->feedImageQueue(layer_idx, new_image);
       }
     }
+    // feed events to the eventcamera
+    // for (const auto& cam : settings_.vehicles[idx].eventcameras) {
+    //     uint32_t image_len = cam.width * cam.height * cam.channels;
+    //     // Get raw image bytes from ZMQ message.
+    //     // WARNING: This is a zero-copy operation that also casts the input to
+    //     // an array of unit8_t. when the message is deleted, this pointer is
+    //     // also dereferenced.
+    //     const uint8_t* image_data;
+    //     msg.get(image_data, image_i);
+    //     image_i = image_i + 1;
+    //     // Pack image into cv::Mat
+    //     cv::Mat new_image =
+    //       cv::Mat(cam.height, cam.width, CV_MAKETYPE(CV_8U, cam.channels));
+    //     memcpy(new_image.data, image_data, image_len);
+    //     // Flip image since OpenCV origin is upper left, but Unity's is lower
+    //     // left.
+    //     cv::flip(new_image, new_image, 0);
+
+    //     // // Tell OpenCv that the input is RGB.
+    //     // if (cam.channels == 3) {
+    //     //   cv::cvtColor(new_image, new_image, CV_RGB2BGR);
+    //     // }
+    //     // unity_quadrotors_[idx]->getCameras()[cam.output_index]->feedImageQueue(
+    //     //   layer_idx, new_image);
+      
+    // }
   }
   return true;
 }
+
 
 bool UnityBridge::getPointCloud(PointCloudMessage_t& pointcloud_msg,
                                 Scalar time_out) {
@@ -256,15 +330,16 @@ bool UnityBridge::getPointCloud(PointCloudMessage_t& pointcloud_msg,
   // // send message without blocking
   // pub_.send(msg, true);
 
-  // std::cout << "Generate PointCloud: Timeout=" << (int)time_out << " seconds."
+  // std::cout << "Generate PointCloud: Timeout=" << (int)time_out << "
+  // seconds."
   //           << std::endl;
 
   // Scalar run_time = 0.0;
   // while (!std::experimental::filesystem::exists(
   //   pointcloud_msg.path + pointcloud_msg.file_name + ".ply")) {
   //   if (run_time >= time_out) {
-  //     logger_.warn("Timeout... PointCloud was not saved within expected time.");
-  //     return false;
+  //     logger_.warn("Timeout... PointCloud was not saved within expected
+  //     time."); return false;
   //   }
   //   std::cout << "Waiting for Pointcloud: Current Runtime=" << (int)run_time
   //             << " seconds." << std::endl;

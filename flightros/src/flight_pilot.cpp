@@ -32,9 +32,21 @@ FlightPilot::FlightPilot(const ros::NodeHandle &nh, const ros::NodeHandle &pnh)
   rgb_camera_->setWidth(720);
   rgb_camera_->setHeight(480);
   rgb_camera_->setRelPose(B_r_BC, R_BC);
-  rgb_camera_->setPostPrecesscing(std::vector<bool>{true, true, true});
+  rgb_camera_->setPostProcesscing(std::vector<bool>{true, true, true});
   quad_ptr_->addRGBCamera(rgb_camera_);
 
+    // add event camera
+  event_camera_ = std::make_shared<EventCamera>();
+  // Vector<3> B_r_BCe(0.0, 0.0, 0.3);
+  // Matrix<3, 3> R_BCe = Quaternion(1.0, 0.0, 0.0, 0.0).toRotationMatrix();
+  std::cout << R_BC << std::endl;
+  event_camera_->setFOV(90);
+  event_camera_->setWidth(720);
+  event_camera_->setHeight(480);
+  event_camera_->setRelPose(B_r_BC, R_BC);
+  quad_ptr_->addEventCamera(event_camera_);
+  int nume = quad_ptr_->getEventCameras().size();
+  ROS_WARN_STREAM("events"<<nume);
   // initialization
   quad_state_.setZero();
   quad_ptr_->reset(quad_state_);
@@ -81,7 +93,10 @@ void FlightPilot::poseCallback(const nav_msgs::Odometry::ConstPtr &msg) {
     rgb_camera_->getOpticalFlow(optical_flow_image);
     rgb_camera_->getRGBImage(rgb_img);
     cv::split(optical_flow_image, bgr);
-    // bgr->pop_back();
+    // handle events to put in main loop, maybe put some checks
+    // this function should be removed in the future
+
+
 
     // // // calculate the opticalflow with opencv
     // if (counter != 0) {
@@ -169,7 +184,8 @@ void FlightPilot::saveImages() {
 }
 
 void FlightPilot::mainLoopCallback(const ros::TimerEvent &event) {
-  // empty
+  // handle events
+
 }
 
 bool FlightPilot::setUnity(const bool render) {
@@ -179,6 +195,7 @@ bool FlightPilot::setUnity(const bool render) {
     unity_bridge_ptr_ = UnityBridge::getInstance();
     unity_bridge_ptr_->addQuadrotor(quad_ptr_);
     ROS_INFO("[%s] Unity Bridge is created.", pnh_.getNamespace().c_str());
+    // ROS_WARN_STREAM("events "<<quad_ptr_->getEventCameras->size());
   }
   return true;
 }
