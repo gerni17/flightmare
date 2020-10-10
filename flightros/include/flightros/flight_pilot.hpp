@@ -27,8 +27,8 @@
 #include "flightlib/common/quad_state.hpp"
 #include "flightlib/common/types.hpp"
 #include "flightlib/objects/quadrotor.hpp"
-#include "flightlib/sensors/rgb_camera.hpp"
 #include "flightlib/sensors/event_camera.hpp"
+#include "flightlib/sensors/rgb_camera.hpp"
 
 using namespace flightlib;
 using OpticFlow = cv::Mat_<cv::Vec<ImageFloatType, 2>>;
@@ -76,6 +76,8 @@ class FlightPilot {
   std::shared_ptr<Quadrotor> quad_ptr_;
   std::shared_ptr<RGBCamera> rgb_camera_;
   std::shared_ptr<EventCamera> event_camera_;
+    std::shared_ptr<EventCamera> event_camera_2;
+  
   QuadState quad_state_;
 
   // Flightmare(Unity3D)
@@ -89,6 +91,7 @@ class FlightPilot {
   cv::Mat prev, curr, bgr_, rgb_img;
   cv::Mat bgr[3];
   cv::Mat optical_flow_image;
+  cv::Mat event_image;
 
   // auxiliary variables
   Scalar main_loop_freq_{50.0};

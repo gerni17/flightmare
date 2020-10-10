@@ -45,7 +45,7 @@ class EventCamera : SensorBase {
   // bool getDepthMap(cv::Mat& depth_map);
   // bool getSegmentation(cv::Mat& segmentation);
   // bool getOpticalFlow(cv::Mat& opticalflow);
-    bool getEvents( const cv::Mat& image_mat);
+    bool getEvents( cv::Mat& image_mat);
 
 
   // auxiliary functions

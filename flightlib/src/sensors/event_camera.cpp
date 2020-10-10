@@ -102,10 +102,10 @@ Scalar EventCamera::getFOV(void) const { return fov_; }
 
 // Scalar EventCamera::getDepthScale(void) const { return depth_scale_; }
 
-bool EventCamera::getEvents(const cv::Mat& event){
+bool EventCamera::getEvents(cv::Mat& event){
   if (!event_queue_.empty()) {
     //seems wrong here
-    // event = event_queue_.front();
+    event = event_queue_.front();
     event_queue_.pop_front();
     return true;
   }

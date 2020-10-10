@@ -32,7 +32,7 @@ FlightPilot::FlightPilot(const ros::NodeHandle &nh, const ros::NodeHandle &pnh)
   rgb_camera_->setWidth(720);
   rgb_camera_->setHeight(480);
   rgb_camera_->setRelPose(B_r_BC, R_BC);
-  rgb_camera_->setPostProcesscing(std::vector<bool>{true, true, true});
+  rgb_camera_->setPostProcesscing(std::vector<bool>{true, false, false});
   quad_ptr_->addRGBCamera(rgb_camera_);
 
     // add event camera
@@ -45,6 +45,16 @@ FlightPilot::FlightPilot(const ros::NodeHandle &nh, const ros::NodeHandle &pnh)
   event_camera_->setHeight(480);
   event_camera_->setRelPose(B_r_BC, R_BC);
   quad_ptr_->addEventCamera(event_camera_);
+
+  //   event_camera_2 = std::make_shared<EventCamera>();
+  // // Vector<3> B_r_BCe(0.0, 0.0, 0.3);
+  // // Matrix<3, 3> R_BCe = Quaternion(1.0, 0.0, 0.0, 0.0).toRotationMatrix();
+  // std::cout << R_BC << std::endl;
+  // event_camera_2->setFOV(90);
+  // event_camera_2->setWidth(720);
+  // event_camera_2->setHeight(480);
+  // event_camera_2->setRelPose(B_r_BC, R_BC);
+  // quad_ptr_->addEventCamera(event_camera_2);
   int nume = quad_ptr_->getEventCameras().size();
   ROS_WARN_STREAM("events"<<nume);
   // initialization
@@ -92,6 +102,7 @@ void FlightPilot::poseCallback(const nav_msgs::Odometry::ConstPtr &msg) {
 
     rgb_camera_->getOpticalFlow(optical_flow_image);
     rgb_camera_->getRGBImage(rgb_img);
+    event_camera_->getEvents(event_image);
     cv::split(optical_flow_image, bgr);
     // handle events to put in main loop, maybe put some checks
     // this function should be removed in the future
@@ -109,7 +120,7 @@ void FlightPilot::poseCallback(const nav_msgs::Odometry::ConstPtr &msg) {
     sensor_msgs::ImagePtr rgb_msg =
       cv_bridge::CvImage(std_msgs::Header(), "bgr8", rgb_img).toImageMsg();
     sensor_msgs::ImagePtr of_msg =
-      cv_bridge::CvImage(std_msgs::Header(), "bgr8", optical_flow_image)
+      cv_bridge::CvImage(std_msgs::Header(), "bgr8", event_image)
         .toImageMsg();
     rgb_pub_.publish(rgb_msg);
     of_pub_.publish(of_msg);

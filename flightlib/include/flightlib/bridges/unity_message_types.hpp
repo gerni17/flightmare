@@ -181,6 +181,7 @@ inline void to_json(json &j, const Vehicle_t &o) {
            {"rotation", o.rotation},
            {"size", o.size},
            {"cameras", o.cameras},
+           {"eventcameras", o.eventcameras},
            {"lidars", o.lidars},
            {"hasCollisionCheck", o.has_collision_check}};
 }
