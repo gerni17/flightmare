@@ -81,7 +81,7 @@ bool UnityBridge::sendInitialSettings(void) {
   msg << "Pose";
   // create JSON object for initial settings
   json json_mesg = settings_;
-  std::cout<<settings_.vehicles[0].eventcameras.size();
+  std::cout << settings_.vehicles[0].eventcameras.size();
   msg << json_mesg.dump();
   // send message without blocking
   pub_.send(msg, true);
@@ -185,6 +185,7 @@ bool UnityBridge::addQuadrotor(std::shared_ptr<Quadrotor> quad) {
 
   // get camera
   std::vector<std::shared_ptr<RGBCamera>> rgb_cameras = quad->getCameras();
+  // size_t cams = 0
   for (size_t cam_idx = 0; cam_idx < rgb_cameras.size(); cam_idx++) {
     std::shared_ptr<RGBCamera> cam = rgb_cameras[cam_idx];
     Camera_t camera_t;
@@ -203,13 +204,13 @@ bool UnityBridge::addQuadrotor(std::shared_ptr<Quadrotor> quad) {
     // add rgb_cameras
     rgb_cameras_.push_back(rgb_cameras[cam_idx]);
   }
-  
+
   std::vector<std::shared_ptr<EventCamera>> event_cameras =
     quad->getEventCameras();
   for (size_t cam_idx = 0; cam_idx < event_cameras.size(); cam_idx++) {
     std::shared_ptr<EventCamera> cam = event_cameras[cam_idx];
     Camera_t camera_t;
-    camera_t.ID = vehicle_t.ID + "_" + std::to_string(cam_idx);
+    camera_t.ID = vehicle_t.ID + "_event_" + std::to_string(cam_idx);
     camera_t.T_BC =
       transformationRos2Unity(event_cameras[cam_idx]->getRelPose());
     camera_t.width = event_cameras[cam_idx]->getWidth();
@@ -276,6 +277,11 @@ bool UnityBridge::handleOutput() {
         cv::Mat new_image =
           cv::Mat(cam.height, cam.width, CV_MAKETYPE(CV_8U, cam.channels));
         memcpy(new_image.data, image_data, image_len);
+        if (new_image.empty()) {
+          logger_.warn("the image is empty");
+
+          return false;
+        }
         // Flip image since OpenCV origin is upper left, but Unity's is lower
         // left.
         cv::flip(new_image, new_image, 0);
@@ -284,34 +290,39 @@ bool UnityBridge::handleOutput() {
         if (cam.channels == 3) {
           cv::cvtColor(new_image, new_image, CV_RGB2BGR);
         }
-        unity_quadrotors_[idx]->getCameras()[cam.output_index]->feedImageQueue(layer_idx, new_image);
+        unity_quadrotors_[idx]->getCameras()[cam.output_index]->feedImageQueue(
+          layer_idx, new_image);
       }
     }
     // feed events to the eventcamera
     for (const auto& cam : settings_.vehicles[idx].eventcameras) {
-        uint32_t image_len = cam.width * cam.height * cam.channels;
-        // Get raw image bytes from ZMQ message.
-        // WARNING: This is a zero-copy operation that also casts the input to
-        // an array of unit8_t. when the message is deleted, this pointer is
-        // also dereferenced.
-        const uint8_t* image_data;
-        msg.get(image_data, image_i);
-        image_i = image_i + 1;
-        // Pack image into cv::Mat
-        cv::Mat new_image =
-          cv::Mat(cam.height, cam.width, CV_MAKETYPE(CV_8U, cam.channels));
-        memcpy(new_image.data, image_data, image_len);
-        // Flip image since OpenCV origin is upper left, but Unity's is lower
-        // left.
-        cv::flip(new_image, new_image, 0);
+      uint32_t image_len = cam.width * cam.height * cam.channels;
+      // Get raw image bytes from ZMQ message.
+      // WARNING: This is a zero-copy operation that also casts the input to
+      // an array of unit8_t. when the message is deleted, this pointer is
+      // also dereferenced.
+      const uint8_t* image_data;
+      msg.get(image_data, image_i);
+      image_i = image_i + 1;
+      // Pack image into cv::Mat
+      cv::Mat new_image =
+        cv::Mat(cam.height, cam.width, CV_MAKETYPE(CV_8U, cam.channels));
+      memcpy(new_image.data, image_data, image_len);
 
-        // // Tell OpenCv that the input is RGB.
-        if (cam.channels == 3) {
-          cv::cvtColor(new_image, new_image, CV_RGB2BGR);
-        }
-        unity_quadrotors_[idx]->getEventCameras()[cam.output_index]->feedEventQueue(
-           new_image);
-      
+      if (new_image.empty()) {
+        logger_.warn("the image is empty");
+
+        return false;
+      }
+      // Flip image since OpenCV origin is upper left, but Unity's is lower
+      // left.
+      cv::flip(new_image, new_image, 0);
+
+      // Tell OpenCv that the input is RGB.
+      if (cam.channels == 3) {
+        cv::cvtColor(new_image, new_image, CV_RGB2BGR);
+      }
+      unity_quadrotors_[idx]->getEventCameras()[cam.output_index]->feedEventQueue(new_image);
     }
   }
   return true;

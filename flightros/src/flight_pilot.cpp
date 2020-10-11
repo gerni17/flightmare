@@ -33,7 +33,7 @@ FlightPilot::FlightPilot(const ros::NodeHandle &nh, const ros::NodeHandle &pnh)
   rgb_camera_->setHeight(480);
   rgb_camera_->setRelPose(B_r_BC, R_BC);
   rgb_camera_->setPostProcesscing(std::vector<bool>{true, false, false});
-  quad_ptr_->addRGBCamera(rgb_camera_);
+  // quad_ptr_->addRGBCamera(rgb_camera_);
 
     // add event camera
   event_camera_ = std::make_shared<EventCamera>();
@@ -55,11 +55,12 @@ FlightPilot::FlightPilot(const ros::NodeHandle &nh, const ros::NodeHandle &pnh)
   // event_camera_2->setHeight(480);
   // event_camera_2->setRelPose(B_r_BC, R_BC);
   // quad_ptr_->addEventCamera(event_camera_2);
-  int nume = quad_ptr_->getEventCameras().size();
-  ROS_WARN_STREAM("events"<<nume);
+  // int nume = quad_ptr_->getEventCameras().size();
+  // ROS_WARN_STREAM("events"<<nume);
   // initialization
   quad_state_.setZero();
   quad_ptr_->reset(quad_state_);
+  quad_ptr_->getCameras().size();
   // initialize Publisher
   rgb_pub_ = my_image_transport.advertise("camera/rgb_image", 1);
   of_pub_ = my_image_transport.advertise("camera/of_image", 1);
@@ -113,7 +114,7 @@ void FlightPilot::poseCallback(const nav_msgs::Odometry::ConstPtr &msg) {
     // if (counter != 0) {
     //   calcopticalFlow();
     // }
-    cv::cvtColor(rgb_img, prev, cv::COLOR_BGR2GRAY);
+    // cv::cvtColor(rgb_img, prev, cv::COLOR_BGR2GRAY);
 
 
     // // // publish the images of server in ros env
@@ -138,36 +139,36 @@ void FlightPilot::poseCallback(const nav_msgs::Odometry::ConstPtr &msg) {
 }
 
 void FlightPilot::calcopticalFlow() {
-  cv::Mat next;
-  curr = rgb_img;
-  cv::cvtColor(curr, next, cv::COLOR_BGR2GRAY);
-  cv::Mat flow(prev.size(), CV_32FC2);
+  // cv::Mat next;
+  // curr = rgb_img;
+  // cv::cvtColor(curr, next, cv::COLOR_BGR2GRAY);
+  // cv::Mat flow(prev.size(), CV_32FC2);
 
-  calcOpticalFlowFarneback(prev, next, flow, 0.5, 3, 15, 3, 5, 1.2, 0);
-  // visualization
-  cv::Mat flow_parts[2];
-  split(flow, flow_parts);
-  cv::Mat magnitude, angle, magn_norm;
-  cartToPolar(flow_parts[0], flow_parts[1], magnitude, angle, true);
-  normalize(magnitude, magn_norm, 0.0f, 1.0f, cv::NORM_MINMAX);
-  angle *= ((1.f / 360.f) * (180.f / 255.f));
-  // build hsv image
-  cv::Mat _hsv[3], hsv, hsv8;
-  _hsv[0] = angle;
-  _hsv[1] = cv::Mat::ones(angle.size(), CV_32F);
-  _hsv[2] = magn_norm;
-  cv::merge(_hsv, 3, hsv);
-  hsv.convertTo(hsv8, CV_8U, 255.0);
-  cvtColor(hsv8, bgr_, cv::COLOR_HSV2BGR);
+  // calcOpticalFlowFarneback(prev, next, flow, 0.5, 3, 15, 3, 5, 1.2, 0);
+  // // visualization
+  // cv::Mat flow_parts[2];
+  // split(flow, flow_parts);
+  // cv::Mat magnitude, angle, magn_norm;
+  // cartToPolar(flow_parts[0], flow_parts[1], magnitude, angle, true);
+  // normalize(magnitude, magn_norm, 0.0f, 1.0f, cv::NORM_MINMAX);
+  // angle *= ((1.f / 360.f) * (180.f / 255.f));
+  // // build hsv image
+  // cv::Mat _hsv[3], hsv, hsv8;
+  // _hsv[0] = angle;
+  // _hsv[1] = cv::Mat::ones(angle.size(), CV_32F);
+  // _hsv[2] = magn_norm;
+  // cv::merge(_hsv, 3, hsv);
+  // hsv.convertTo(hsv8, CV_8U, 255.0);
+  // cvtColor(hsv8, bgr_, cv::COLOR_HSV2BGR);
 
-  if (counter == 100) {
-    calculateHist(flow_parts);
-  }
+  // if (counter == 100) {
+  //   calculateHist(flow_parts);
+  // }
 
-  // publish the image
-  sensor_msgs::ImagePtr cv_msg =
-    cv_bridge::CvImage(std_msgs::Header(), "bgr8", bgr_).toImageMsg();
-  cv_pub_.publish(cv_msg);
+  // // publish the image
+  // sensor_msgs::ImagePtr cv_msg =
+  //   cv_bridge::CvImage(std_msgs::Header(), "bgr8", bgr_).toImageMsg();
+  // cv_pub_.publish(cv_msg);
 }
 
 void FlightPilot::saveCSV() {
@@ -188,7 +189,7 @@ void FlightPilot::saveImages() {
     "/home/gian/flightmare/rgb/rgb" + std::to_string(counter) + ".png";
   ROS_INFO_STREAM("written to " << path);
   cv::imwrite(path_rgb, rgb_img);
-  cv::imwrite(path, optical_flow_image);
+  cv::imwrite(path, event_image);
   // std::string path_ = "/home/gian/flightmare/calculated_of/calculated_img_" +
   //                     std::to_string(counter) + ".png";
   // cv::imwrite(path_, bgr_);
