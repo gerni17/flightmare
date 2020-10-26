@@ -3,16 +3,13 @@
 namespace flightlib {
 
 EventCamera::EventCamera()
-  : channels_(3),
-    width_(720),
-    height_(480),
-    fov_{70.0} {}
+  : channels_(3), width_(720), height_(480), fov_{70.0} {}
 
 EventCamera::~EventCamera() {}
 
 bool EventCamera::feedEventImageQueue(const cv::Mat& event) {
   queue_mutex_.lock();
-      event_image_queue_.push_back(event);
+  event_image_queue_.push_back(event);
   queue_mutex_.unlock();
   return true;
 }
@@ -20,16 +17,21 @@ bool EventCamera::feedEventImageQueue(const cv::Mat& event) {
 bool EventCamera::feedEventQueue(const std::vector<Event>& events) {
   // TODO:sort and order the events
   queue_mutex_.lock();
-      event_queue_.push_back(events);
+  event_queue_.push_back(events);
+  // std::vector<Event> e(events.size()) ;
+  event_queue_for_img.resize(events.size());
+  event_queue_for_img = events;
   queue_mutex_.unlock();
-    queue_mutex_.lock();
-      event_queue_for_img.push_back(events);
-  queue_mutex_.unlock();
+  std::string amount = std::to_string(event_queue_for_img.size());
+  logger_.warn(amount);
+  // for (auto event : event_queue_for_img) {
+  //   if (event.polarity != 0) logger_.error("ueppa");
+  // }
   return true;
 }
 
 bool EventCamera::setRelPose(const Ref<Vector<3>> B_r_BC,
-                           const Ref<Matrix<3, 3>> R_BC) {
+                             const Ref<Matrix<3, 3>> R_BC) {
   if (!B_r_BC.allFinite() || !R_BC.allFinite()) {
     logger_.error(
       "The setting value for Camera Relative Pose Matrix is not valid, discard "
@@ -86,7 +88,8 @@ bool EventCamera::setFOV(const Scalar fov) {
 //   return true;
 // }
 
-// bool EventCamera::setPostProcesscing(const std::vector<bool>& enabled_layers) {
+// bool EventCamera::setPostProcesscing(const std::vector<bool>& enabled_layers)
+// {
 //   if (enabled_layers_.size() != enabled_layers.size()) {
 //     logger_.warn(
 //       "Vector size does not match. The vector size should be equal to %d.",
@@ -113,23 +116,54 @@ Scalar EventCamera::getFOV(void) const { return fov_; }
 
 // Scalar EventCamera::getDepthScale(void) const { return depth_scale_; }
 
-bool EventCamera::getEventImages(cv::Mat& event){
+bool EventCamera::getEventImages(cv::Mat& event) {
   if (!event_queue_.empty()) {
-    //seems wrong here
+    // seems wrong here
     event = event_image_queue_.front();
     event_image_queue_.pop_front();
     return true;
   }
   return false;
 }
-  bool EventCamera::createEventimages(){
-    cv::Mat image;
-    // take event cue and choose first 50events
-    
-    // for eac event check that time is different thn zero 
-    // put those event into matrix
+cv::Mat EventCamera::createEventimages() {
+  int wid = getWidth();
+  int hei = getHeight();
+  cv::Mat image = cv::Mat::zeros(cv::Size(wid, hei), CV_64FC1);
+  std::vector<Event> events;
 
+  // red
+  image.at<cv::Vec3b>(10, 10)[0] = 0;
+  image.at<cv::Vec3b>(10, 10)[1] = 0;
+  image.at<cv::Vec3b>(10, 10)[2] = 255;
+
+
+  events = event_queue_for_img;
+  // event_queue_for_img.clear();
+  for (auto event : events) {
+    // if (event.polarity == 0);
+    if (event.polarity !=0) {
+      std::string amount = std::to_string(event.polarity);
+      logger_.warn(amount);
+      logger_.warn("polneg");
+      // image.at<cv::Vec3b>(event.coord[0], event.coord[1])[0] = 0;
+      // image.at<cv::Vec3b>(event.coord[0], event.coord[1])[1] = 0;
+      // image.at<cv::Vec3b>(event.coord[0], event.coord[1])[2] = 255;
+    } else if (event.polarity == 2) {
+      logger_.warn("polpos");
+      image.at<cv::Vec3b>(event.coord[0], event.coord[1])[0] = 255;
+      image.at<cv::Vec3b>(event.coord[0], event.coord[1])[1] = 0;
+      image.at<cv::Vec3b>(event.coord[0], event.coord[1])[2] = 0;
+    }
   }
+  return image;
+}
+
+
+// take event cue and choose first 50events
+
+// for eac event check that time is different thn zero
+// put those event into matrix
+// }  // namespace flightlib
 // bool EventCamera::getRGBImage(cv::Mat& rgb_img) {
 //   if (!rgb_queue_.empty()) {
 //     rgb_img = rgb_queue_.front();

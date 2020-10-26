@@ -52,7 +52,7 @@ class EventCamera : SensorBase {
   // bool getSegmentation(cv::Mat& segmentation);
   // bool getOpticalFlow(cv::Mat& opticalflow);
   bool getEventImages(cv::Mat& image_mat);
-  bool createEventimages();
+  cv::Mat createEventimages();
   // bool getEvents(std::vector<Event>& events);
 
 
@@ -81,7 +81,7 @@ class EventCamera : SensorBase {
 
   std::deque<cv::Mat> event_image_queue_;
   std::deque<std::vector<Event>> event_queue_;
-  std::deque<std::vector<Event>> event_queue_for_img;
+  std::vector<Event> event_queue_for_img;
 
   // std::deque<cv::Mat> opticalflow_queue_;
   // std::deque<flightlib::Event> event_queue_;

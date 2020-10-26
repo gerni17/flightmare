@@ -108,7 +108,7 @@ void FlightPilot::poseCallback(const nav_msgs::Odometry::ConstPtr &msg) {
     cv::split(optical_flow_image, bgr);
     // handle events to put in main loop, maybe put some checks
     // this function should be removed in the future
-
+    event_image = event_camera_->createEventimages();
 
     // // // calculate the opticalflow with opencv
     // if (counter != 0) {

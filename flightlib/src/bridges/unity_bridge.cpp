@@ -333,7 +333,10 @@ bool UnityBridge::handleOutput() {
       // if (cam.channels == 3) {
       //   cv::cvtColor(new_image, new_image, CV_RGB2BGR);
       // }
-      // unity_quadrotors_[idx]->getEventCameras()[cam.output_index]->feedEventQueue(events);
+      // for(auto event:events){
+      //   if(event.polarity!=0)logger_.error("uoooooooooooooooo");
+      // }
+      unity_quadrotors_[idx]->getEventCameras()[cam.output_index]->feedEventQueue(events);
     }
   }
 
