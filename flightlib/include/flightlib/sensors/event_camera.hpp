@@ -1,11 +1,11 @@
 #pragma once
 
 #include <yaml-cpp/yaml.h>
+
 #include <deque>
 #include <functional>
 #include <memory>
 #include <mutex>
-
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
 
@@ -15,7 +15,11 @@
 
 namespace flightlib {
 
-
+struct Event {
+  int coord[2];
+  int polarity;
+  float time;
+};
 
 
 class EventCamera : SensorBase {
@@ -31,7 +35,9 @@ class EventCamera : SensorBase {
   bool setFOV(const Scalar fov);
   // bool setDepthScale(const Scalar depth_scale);
   // bool setPostProcesscing(const std::vector<bool>& enabled_layers);
-  bool feedEventQueue( const cv::Mat& image_mat);
+  bool feedEventImageQueue(const cv::Mat& image_mat);
+  bool feedEventQueue(const std::vector<Event>& events);
+
 
   // public get functions
   // std::vector<bool> getEnabledLayers(void) const;
@@ -45,7 +51,9 @@ class EventCamera : SensorBase {
   // bool getDepthMap(cv::Mat& depth_map);
   // bool getSegmentation(cv::Mat& segmentation);
   // bool getOpticalFlow(cv::Mat& opticalflow);
-    bool getEvents( cv::Mat& image_mat);
+  bool getEventImages(cv::Mat& image_mat);
+  bool createEventimages();
+  // bool getEvents(std::vector<Event>& events);
 
 
   // auxiliary functions
@@ -71,7 +79,10 @@ class EventCamera : SensorBase {
   std::mutex queue_mutex_;
   const int queue_size_ = 1;
 
-  std::deque<cv::Mat> event_queue_;
+  std::deque<cv::Mat> event_image_queue_;
+  std::deque<std::vector<Event>> event_queue_;
+  std::deque<std::vector<Event>> event_queue_for_img;
+
   // std::deque<cv::Mat> opticalflow_queue_;
   // std::deque<flightlib::Event> event_queue_;
 

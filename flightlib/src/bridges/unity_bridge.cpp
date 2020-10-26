@@ -248,10 +248,12 @@ bool UnityBridge::addStaticObject(std::shared_ptr<StaticObject> static_object) {
 bool UnityBridge::handleOutput() {
   // create new message object
   zmqpp::message msg;
+
   sub_.receive(msg);
+
   // unpack message metadata
   std::string json_sub_msg = msg.get(0);
-  // parse metadata
+  // // parse metadata
   SubMessage_t sub_msg = json::parse(json_sub_msg);
 
   size_t image_i = 1;
@@ -296,37 +298,47 @@ bool UnityBridge::handleOutput() {
     }
     // feed events to the eventcamera
     for (const auto& cam : settings_.vehicles[idx].eventcameras) {
-      uint32_t image_len = cam.width * cam.height * cam.channels;
-      // Get raw image bytes from ZMQ message.
-      // WARNING: This is a zero-copy operation that also casts the input to
-      // an array of unit8_t. when the message is deleted, this pointer is
-      // also dereferenced.
-      const uint8_t* image_data;
-      msg.get(image_data, image_i);
-      image_i = image_i + 1;
-      // Pack image into cv::Mat
-      cv::Mat new_image =
-        cv::Mat(cam.height, cam.width, CV_MAKETYPE(CV_8U, cam.channels));
-      memcpy(new_image.data, image_data, image_len);
+      uint32_t buff_len = 449800*16;
 
-      if (new_image.empty()) {
+      const uint8_t* data_ptr;
+      msg.get(data_ptr, image_i);
+      image_i = image_i + 1;
+      std::vector<Event> events(buff_len);
+      if (events.max_size() < (buff_len )) {
+        logger_.warn("too big");
+        // logger_.warn(buff_len.ToString());
+      }
+      // // logger_.warn(json_msg);
+
+      // EventsMessage_t event_msg;
+      // logger_.warn("we did reach this");
+      // event_msg.events =
+      // json::parse(json_msg).at("events").get<std::vector<Event_t>>();
+      // logger_.warn("but not this");
+
+      // events = json::parse(json_msg).at(image_i).get<std::vector<Event_t>>();
+      logger_.warn("pre-reading");
+      memcpy(events.data(), data_ptr, buff_len);
+      if (events.empty()) {
         logger_.warn("the image is empty");
 
-        return false;
+        // return false;
       }
+
       // Flip image since OpenCV origin is upper left, but Unity's is lower
       // left.
-      cv::flip(new_image, new_image, 0);
+      // cv::flip(new_image, new_image, 0);
 
       // Tell OpenCv that the input is RGB.
-      if (cam.channels == 3) {
-        cv::cvtColor(new_image, new_image, CV_RGB2BGR);
-      }
-      unity_quadrotors_[idx]->getEventCameras()[cam.output_index]->feedEventQueue(new_image);
+      // if (cam.channels == 3) {
+      //   cv::cvtColor(new_image, new_image, CV_RGB2BGR);
+      // }
+      // unity_quadrotors_[idx]->getEventCameras()[cam.output_index]->feedEventQueue(events);
     }
   }
+
   return true;
-}
+}  // namespace flightlib
 
 
 bool UnityBridge::getPointCloud(PointCloudMessage_t& pointcloud_msg,

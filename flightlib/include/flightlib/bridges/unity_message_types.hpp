@@ -29,6 +29,16 @@ enum UnityScene {
   SceneNum = 4
 };
 
+struct Event_t {
+  int coord_x;
+  int coord_y;
+  int polarity;
+  float time;
+};
+
+struct EventsMessage_t {
+  std::vector<Event_t> events;
+};
 // Unity Camera, should not be used alone.
 // has to be attached on a vehicle.
 struct Camera_t {
@@ -221,6 +231,24 @@ inline void from_json(const json &j, SubMessage_t &o) {
   o.sub_vehicles = j.at("pub_vehicles").get<std::vector<Sub_Vehicle_t>>();
 }
 
+inline void from_json(const json &j, Event_t &o) {
+  o.coord_x = j.at("coord_x").get<int>();
+  o.coord_y = j.at("coord_y").get<int>();
+  o.polarity = j.at("polarity").get<int>();
+  o.time = j.at("time").get<float>();
+}
+
+// inline void from_json(const json &j, std::vector<Event_t> &o) {
+//   o.coord_x = j.at("coord_x").get<int>();
+//   o.coord_y = j.at("coord_y").get<int>();
+//   o.polarity = j.at("polarity").get<int>();
+//   o.time = j.at("time").get<float>();
+// }
+
+inline void from_json(const json &j, EventsMessage_t &o) {
+  o.events = j.at("events").get<std::vector<Event_t>>();
+}
+
 inline void to_json(json &j, const PointCloudMessage_t &o) {
   j = json{{"range", o.range},
            {"origin", o.origin},
@@ -229,10 +257,22 @@ inline void to_json(json &j, const PointCloudMessage_t &o) {
            {"file_name", o.file_name}};
 }
 
+inline void to_json(json &j, const Event_t &o) {
+  j = json{{"coord_x", o.coord_x},
+           {"coord_y", o.coord_y},
+           {"polarity", o.polarity},
+           {"time", o.time}};
+}
+
+inline void to_json(json &j, const EventsMessage_t &o) {
+  j = json{{"events", o.events}};
+}
+
 // Struct for outputting parsed received messages to handler functions
 struct RenderMessage_t {
   SubMessage_t sub_msg;
   std::vector<cv::Mat> images;
+  // std::vector<Event_t> events;
 };
 
 }  // namespace flightlib

@@ -29,20 +29,20 @@ FlightPilot::FlightPilot(const ros::NodeHandle &nh, const ros::NodeHandle &pnh)
   Matrix<3, 3> R_BC = Quaternion(1.0, 0.0, 0.0, 0.0).toRotationMatrix();
   std::cout << R_BC << std::endl;
   rgb_camera_->setFOV(90);
-  rgb_camera_->setWidth(720);
-  rgb_camera_->setHeight(480);
+  rgb_camera_->setWidth(346);
+  rgb_camera_->setHeight(260);
   rgb_camera_->setRelPose(B_r_BC, R_BC);
-  rgb_camera_->setPostProcesscing(std::vector<bool>{true, false, false});
-  // quad_ptr_->addRGBCamera(rgb_camera_);
+  rgb_camera_->setPostProcesscing(std::vector<bool>{false, false, false});
+  quad_ptr_->addRGBCamera(rgb_camera_);
 
-    // add event camera
+  // add event camera
   event_camera_ = std::make_shared<EventCamera>();
   // Vector<3> B_r_BCe(0.0, 0.0, 0.3);
   // Matrix<3, 3> R_BCe = Quaternion(1.0, 0.0, 0.0, 0.0).toRotationMatrix();
   std::cout << R_BC << std::endl;
   event_camera_->setFOV(90);
-  event_camera_->setWidth(720);
-  event_camera_->setHeight(480);
+  event_camera_->setWidth(346);
+  event_camera_->setHeight(260);
   event_camera_->setRelPose(B_r_BC, R_BC);
   quad_ptr_->addEventCamera(event_camera_);
 
@@ -64,7 +64,7 @@ FlightPilot::FlightPilot(const ros::NodeHandle &nh, const ros::NodeHandle &pnh)
   // initialize Publisher
   rgb_pub_ = my_image_transport.advertise("camera/rgb_image", 1);
   of_pub_ = my_image_transport.advertise("camera/of_image", 1);
-  cv_pub_ = my_image_transport.advertise("camera/cv_image", 1);
+  cv_pub_ = my_image_transport.advertise("camera/event_image", 1);
   // my_detected_line_image_pub = my_image_transport.advertise("camera/image",
   // 3); initialize subscriber call backs
   sub_state_est_ = nh_.subscribe("flight_pilot/state_estimate", 1,
@@ -85,6 +85,7 @@ FlightPilot::FlightPilot(const ros::NodeHandle &nh, const ros::NodeHandle &pnh)
 FlightPilot::~FlightPilot() {}
 
 void FlightPilot::poseCallback(const nav_msgs::Odometry::ConstPtr &msg) {
+
   quad_state_.x[QS::POSX] = (Scalar)msg->pose.pose.position.x;
   quad_state_.x[QS::POSY] = (Scalar)msg->pose.pose.position.y;
   quad_state_.x[QS::POSZ] = (Scalar)msg->pose.pose.position.z;
@@ -103,11 +104,10 @@ void FlightPilot::poseCallback(const nav_msgs::Odometry::ConstPtr &msg) {
 
     rgb_camera_->getOpticalFlow(optical_flow_image);
     rgb_camera_->getRGBImage(rgb_img);
-    event_camera_->getEvents(event_image);
+    // event_camera_->getEvents(event_image);
     cv::split(optical_flow_image, bgr);
     // handle events to put in main loop, maybe put some checks
     // this function should be removed in the future
-
 
 
     // // // calculate the opticalflow with opencv
@@ -121,16 +121,18 @@ void FlightPilot::poseCallback(const nav_msgs::Odometry::ConstPtr &msg) {
     sensor_msgs::ImagePtr rgb_msg =
       cv_bridge::CvImage(std_msgs::Header(), "bgr8", rgb_img).toImageMsg();
     sensor_msgs::ImagePtr of_msg =
-      cv_bridge::CvImage(std_msgs::Header(), "bgr8", event_image)
-        .toImageMsg();
+      cv_bridge::CvImage(std_msgs::Header(), "bgr8", optical_flow_image).toImageMsg();
+    sensor_msgs::ImagePtr ev_msg =
+      cv_bridge::CvImage(std_msgs::Header(), "bgr8", event_image).toImageMsg();
+    cv_pub_.publish(ev_msg);
     rgb_pub_.publish(rgb_msg);
     of_pub_.publish(of_msg);
 
     // saveImages();
-    if(counter%100==0){
+    if (counter % 100 == 0) {
       auto time = std::chrono::system_clock::now();
       std::time_t end_time = std::chrono::system_clock::to_time_t(time);
-      ROS_INFO_STREAM("time "<<std::ctime(&end_time));
+      ROS_INFO_STREAM("time " << std::ctime(&end_time));
     }
     saveImages();
     // saveCSV();  // only useful if checking the motion vectors
@@ -197,7 +199,6 @@ void FlightPilot::saveImages() {
 
 void FlightPilot::mainLoopCallback(const ros::TimerEvent &event) {
   // handle events
-
 }
 
 bool FlightPilot::setUnity(const bool render) {

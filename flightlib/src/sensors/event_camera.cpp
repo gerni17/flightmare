@@ -10,9 +10,20 @@ EventCamera::EventCamera()
 
 EventCamera::~EventCamera() {}
 
-bool EventCamera::feedEventQueue(const cv::Mat& event) {
+bool EventCamera::feedEventImageQueue(const cv::Mat& event) {
   queue_mutex_.lock();
-      event_queue_.push_back(event);
+      event_image_queue_.push_back(event);
+  queue_mutex_.unlock();
+  return true;
+}
+
+bool EventCamera::feedEventQueue(const std::vector<Event>& events) {
+  // TODO:sort and order the events
+  queue_mutex_.lock();
+      event_queue_.push_back(events);
+  queue_mutex_.unlock();
+    queue_mutex_.lock();
+      event_queue_for_img.push_back(events);
   queue_mutex_.unlock();
   return true;
 }
@@ -102,16 +113,23 @@ Scalar EventCamera::getFOV(void) const { return fov_; }
 
 // Scalar EventCamera::getDepthScale(void) const { return depth_scale_; }
 
-bool EventCamera::getEvents(cv::Mat& event){
+bool EventCamera::getEventImages(cv::Mat& event){
   if (!event_queue_.empty()) {
     //seems wrong here
-    event = event_queue_.front();
-    event_queue_.pop_front();
+    event = event_image_queue_.front();
+    event_image_queue_.pop_front();
     return true;
   }
   return false;
 }
+  bool EventCamera::createEventimages(){
+    cv::Mat image;
+    // take event cue and choose first 50events
+    
+    // for eac event check that time is different thn zero 
+    // put those event into matrix
 
+  }
 // bool EventCamera::getRGBImage(cv::Mat& rgb_img) {
 //   if (!rgb_queue_.empty()) {
 //     rgb_img = rgb_queue_.front();
