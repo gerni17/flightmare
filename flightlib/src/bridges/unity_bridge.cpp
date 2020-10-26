@@ -303,26 +303,21 @@ bool UnityBridge::handleOutput() {
       const uint8_t* data_ptr;
       msg.get(data_ptr, image_i);
       image_i = image_i + 1;
-      std::vector<Event> events(buff_len);
+      std::vector<Event> events;
+      events.resize(449800);
       if (events.max_size() < (buff_len )) {
         logger_.warn("too big");
         // logger_.warn(buff_len.ToString());
       }
-      // // logger_.warn(json_msg);
 
-      // EventsMessage_t event_msg;
-      // logger_.warn("we did reach this");
-      // event_msg.events =
-      // json::parse(json_msg).at("events").get<std::vector<Event_t>>();
-      // logger_.warn("but not this");
 
       // events = json::parse(json_msg).at(image_i).get<std::vector<Event_t>>();
       logger_.warn("pre-reading");
       memcpy(events.data(), data_ptr, buff_len);
+
       if (events.empty()) {
         logger_.warn("the image is empty");
 
-        // return false;
       }
 
       // Flip image since OpenCV origin is upper left, but Unity's is lower
