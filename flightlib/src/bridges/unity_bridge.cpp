@@ -298,27 +298,35 @@ bool UnityBridge::handleOutput() {
     }
     // feed events to the eventcamera
     for (const auto& cam : settings_.vehicles[idx].eventcameras) {
-      uint32_t buff_len = 449800*16;
+      // uint32_t buff_len = 449800 * 16;
 
-      const uint8_t* data_ptr;
-      msg.get(data_ptr, image_i);
-      image_i = image_i + 1;
-      std::vector<Event> events;
-      events.resize(449800);
-      if (events.max_size() < (buff_len )) {
-        logger_.warn("too big");
-        // logger_.warn(buff_len.ToString());
-      }
+      // const uint8_t* data_ptr;
+      // msg.get(data_ptr, image_i);
+      // image_i = image_i + 1;
+
+      // std::vector<Event> events;
+      // events.resize(449800);
+      // if (events.max_size() < (buff_len)) {
+      //   logger_.warn("too big");
+      //   // logger_.warn(buff_len.ToString());
+      // }
 
 
-      // events = json::parse(json_msg).at(image_i).get<std::vector<Event_t>>();
+      // // // // json::parse(json_msg).at(image_i).get<std::vector<Event_t>>();
+
+      // memcpy(events.data(), data_ptr, buff_len);
+
+
+      // if (events.empty()) {
+      //   logger_.warn("the image is empty");
+      // }
+      // std::string json_msg;
+      // json_msg.resize(msg.size(image_i));
+      std::string json_msg = msg.get(image_i);
       logger_.warn("pre-reading");
-      memcpy(events.data(), data_ptr, buff_len);
+      EventsMessage_t events_ = json::parse(json_msg).get<EventsMessage_t>();
+      logger_.warn("pre-reading");
 
-      if (events.empty()) {
-        logger_.warn("the image is empty");
-
-      }
 
       // Flip image since OpenCV origin is upper left, but Unity's is lower
       // left.
@@ -328,10 +336,13 @@ bool UnityBridge::handleOutput() {
       // if (cam.channels == 3) {
       //   cv::cvtColor(new_image, new_image, CV_RGB2BGR);
       // }
-      // for(auto event:events){
-      //   if(event.polarity!=0)logger_.error("uoooooooooooooooo");
+      // for (auto event : events_.events) {
+      //   std::string amount = std::to_string(event.coord_x);
+      //   logger_.warn(amount);
       // }
-      unity_quadrotors_[idx]->getEventCameras()[cam.output_index]->feedEventQueue(events);
+      unity_quadrotors_[idx]
+        ->getEventCameras()[cam.output_index]
+        ->feedEventQueue(events_.events);
     }
   }
 

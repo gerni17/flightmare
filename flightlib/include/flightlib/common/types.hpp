@@ -1,7 +1,7 @@
 #pragma once
 
-#include <memory>
 #include <eigen3/Eigen/Eigen>
+#include <memory>
 // #include <cstdio>
 // #include <stdint.h>
 // #include <cinttypes>
@@ -94,6 +94,13 @@ const Vector<3> GVEC{0.0, 0.0, Gz};
 //   Time t;
 //   bool pol;
 // };
+
+struct Event_t {
+  int coord_x;
+  int coord_y;
+  int polarity;
+  float time;
+};
 
 
 }  // namespace flightlib

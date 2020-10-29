@@ -16,7 +16,8 @@
 namespace flightlib {
 
 struct Event {
-  int coord[2];
+  int coord_x;
+  int coord_y;
   int polarity;
   float time;
 };
@@ -36,7 +37,7 @@ class EventCamera : SensorBase {
   // bool setDepthScale(const Scalar depth_scale);
   // bool setPostProcesscing(const std::vector<bool>& enabled_layers);
   bool feedEventImageQueue(const cv::Mat& image_mat);
-  bool feedEventQueue(const std::vector<Event>& events);
+  bool feedEventQueue(const std::vector<Event_t>& events);
 
 
   // public get functions
@@ -80,8 +81,8 @@ class EventCamera : SensorBase {
   const int queue_size_ = 1;
 
   std::deque<cv::Mat> event_image_queue_;
-  std::deque<std::vector<Event>> event_queue_;
-  std::vector<Event> event_queue_for_img;
+  std::deque<std::vector<Event_t>> event_queue_;
+  std::vector<Event_t> event_queue_for_img;
 
   // std::deque<cv::Mat> opticalflow_queue_;
   // std::deque<flightlib::Event> event_queue_;

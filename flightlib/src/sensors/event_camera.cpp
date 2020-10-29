@@ -14,7 +14,7 @@ bool EventCamera::feedEventImageQueue(const cv::Mat& event) {
   return true;
 }
 
-bool EventCamera::feedEventQueue(const std::vector<Event>& events) {
+bool EventCamera::feedEventQueue(const std::vector<Event_t>& events) {
   // TODO:sort and order the events
   queue_mutex_.lock();
   event_queue_.push_back(events);
@@ -129,32 +129,43 @@ cv::Mat EventCamera::createEventimages() {
   int wid = getWidth();
   int hei = getHeight();
   cv::Mat image = cv::Mat::zeros(cv::Size(wid, hei), CV_64FC1);
-  std::vector<Event> events;
+  std::vector<Event_t> events;
 
   // red
-  image.at<cv::Vec3b>(10, 10)[0] = 0;
-  image.at<cv::Vec3b>(10, 10)[1] = 0;
-  image.at<cv::Vec3b>(10, 10)[2] = 255;
+  // image.at<cv::Vec3b>(10, 10)[0] = 0;
+  // image.at<cv::Vec3b>(10, 10)[1] = 0;
+  // image.at<cv::Vec3b>(10, 10)[2] = 255;
 
-
+  int count = 0;
   events = event_queue_for_img;
   // event_queue_for_img.clear();
   for (auto event : events) {
+    if (event.coord_x > wid || event.coord_y > hei) {
+      logger_.error("coord out of the image");
+    }
     // if (event.polarity == 0);
-    if (event.polarity !=0) {
-      std::string amount = std::to_string(event.polarity);
-      logger_.warn(amount);
-      logger_.warn("polneg");
-      // image.at<cv::Vec3b>(event.coord[0], event.coord[1])[0] = 0;
-      // image.at<cv::Vec3b>(event.coord[0], event.coord[1])[1] = 0;
-      // image.at<cv::Vec3b>(event.coord[0], event.coord[1])[2] = 255;
-    } else if (event.polarity == 2) {
-      logger_.warn("polpos");
-      image.at<cv::Vec3b>(event.coord[0], event.coord[1])[0] = 255;
-      image.at<cv::Vec3b>(event.coord[0], event.coord[1])[1] = 0;
-      image.at<cv::Vec3b>(event.coord[0], event.coord[1])[2] = 0;
+    if (event.polarity == 1) {
+      // std::string amount = std::to_string(event.polarity);
+      // logger_.warn(amount);
+
+      // logger_.warn("polneg");
+      image.at<cv::Vec3b>(event.coord_y, event.coord_x)[0] = 0;
+      image.at<cv::Vec3b>(event.coord_y, event.coord_x)[1] = 0;
+      image.at<cv::Vec3b>(event.coord_y, event.coord_x)[2] = 255;
+    } else if (event.polarity == -1) {
+      count++;
+      // logger_.warn("polpos");
+      image.at<cv::Vec3b>(event.coord_y, event.coord_x)[0] = 255;
+      image.at<cv::Vec3b>(event.coord_y, event.coord_x)[1] = 0;
+      image.at<cv::Vec3b>(event.coord_y, event.coord_x)[2] = 0;
     }
   }
+  std::string amount = std::to_string(count);
+  logger_.warn(amount);
+  // cv::Mat flipped_image = cv::Mat::zeros(cv::Size(wid, hei), CV_64FC1);
+
+  // cv::flip(flipped_image, image, 0);
+
   return image;
 }
 

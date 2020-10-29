@@ -29,12 +29,12 @@ enum UnityScene {
   SceneNum = 4
 };
 
-struct Event_t {
-  int coord_x;
-  int coord_y;
-  int polarity;
-  float time;
-};
+// struct Event_t {
+//   int coord_x;
+//   int coord_y;
+//   int polarity;
+//   float time;
+// };
 
 struct EventsMessage_t {
   std::vector<Event_t> events;
@@ -239,10 +239,10 @@ inline void from_json(const json &j, Event_t &o) {
 }
 
 // inline void from_json(const json &j, std::vector<Event_t> &o) {
-//   o.coord_x = j.at("coord_x").get<int>();
-//   o.coord_y = j.at("coord_y").get<int>();
-//   o.polarity = j.at("polarity").get<int>();
-//   o.time = j.at("time").get<float>();
+//   o.event_t = j.at("Event_t").get<Event_t>();
+//   // o.coord_y = j.at("coord_y").get<int>();
+//   // o.polarity = j.at("polarity").get<int>();
+//   // o.time = j.at("time").get<float>();
 // }
 
 inline void from_json(const json &j, EventsMessage_t &o) {
