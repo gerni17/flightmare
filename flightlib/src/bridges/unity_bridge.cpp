@@ -322,10 +322,11 @@ bool UnityBridge::handleOutput() {
       // }
       // std::string json_msg;
       // json_msg.resize(msg.size(image_i));
-      std::string json_msg = msg.get(image_i);
-      logger_.warn("pre-reading");
-      EventsMessage_t events_ = json::parse(json_msg).get<EventsMessage_t>();
-      logger_.warn("pre-reading");
+      // std::string json_msg = msg.get(image_i);
+      // image_i = image_i + 1;
+      // logger_.warn("pre-reading");
+      // EventsMessage_t events_ = json::parse(json_msg).get<EventsMessage_t>();
+      // logger_.warn("pre-reading");
 
 
       // Flip image since OpenCV origin is upper left, but Unity's is lower
@@ -340,9 +341,16 @@ bool UnityBridge::handleOutput() {
       //   std::string amount = std::to_string(event.coord_x);
       //   logger_.warn(amount);
       // }
-      unity_quadrotors_[idx]
-        ->getEventCameras()[cam.output_index]
-        ->feedEventQueue(events_.events);
+      // unity_quadrotors_[idx]
+      //   ->getEventCameras()[cam.output_index]
+      //   ->feedEventQueue(events_.events);
+
+      std::string time_msg = msg.get(image_i);
+      image_i = image_i + 1;
+      TimeMessage_t timestep = json::parse(time_msg).get<TimeMessage_t>();
+      logger_.warn("pre-reading");
+      std::string amount = std::to_string(timestep.next_timestep);
+      logger_.warn(amount);
     }
   }
 

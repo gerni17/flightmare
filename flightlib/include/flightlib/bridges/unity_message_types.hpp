@@ -60,27 +60,9 @@ struct Camera_t {
                            0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
 };
 
-// // Unity Event Camera, should not be used alone.
-// // has to be attached on a vehicle.
-// // Not sure if needed
-// struct eCamera_t {
-//   std::string ID;
-//   // frame Metadata
-//   int channels{3};
-//   int width{1024};
-//   int height{768};
-//   Scalar fov{70.0f};
-//   Scalar depth_scale{0.20};  // 0.xx corresponds to xx cm resolution
-//   // metadata
-//   bool is_depth{false};
-//   int output_index{0};
-//   //
-//   std::vector<bool> enabled_layers;
-//   // Transformation matrix from camera to vehicle body 4 x 4
-//   // use 1-D vector for json convention
-//   std::vector<Scalar> T_BC{0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
-//                            0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
-// };
+struct TimeMessage_t{
+  float next_timestep;
+};
 
 struct Lidar_t {
   std::string ID;
@@ -247,6 +229,10 @@ inline void from_json(const json &j, Event_t &o) {
 
 inline void from_json(const json &j, EventsMessage_t &o) {
   o.events = j.at("events").get<std::vector<Event_t>>();
+}
+
+inline void from_json(const json &j, TimeMessage_t &o) {
+  o.next_timestep = j.at("next_timestep").get<float>();
 }
 
 inline void to_json(json &j, const PointCloudMessage_t &o) {
