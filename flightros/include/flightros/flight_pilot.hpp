@@ -1,6 +1,13 @@
 
 #pragma once
 
+// ros
+#include <cv_bridge/cv_bridge.h>
+#include <image_transport/image_transport.h>
+#include <nav_msgs/Odometry.h>
+#include <ros/ros.h>
+#include <sensor_msgs/Image.h>
+
 // standard libraries
 #include <assert.h>
 #include <Eigen/Dense>
@@ -13,24 +20,19 @@
 #include <sstream>
 #include <thread>
 #include <vector>
-#include <ctime>
-#include <memory>
+// #include <ctime>
+// #include <memory>
 
 
 #define ImageFloatType float
 
-// ros
-#include <cv_bridge/cv_bridge.h>
-#include <image_transport/image_transport.h>
-#include <nav_msgs/Odometry.h>
-#include <ros/ros.h>
-#include <sensor_msgs/Image.h>
+
 
 // rpg quadrotor
-#include <autopilot/autopilot_helper.h>
-#include <autopilot/autopilot_states.h>
+// #include <autopilot/autopilot_helper.h>
+// #include <autopilot/autopilot_states.h>
 #include <quadrotor_common/parameter_helper.h>
-#include <quadrotor_msgs/AutopilotFeedback.h>
+// #include <quadrotor_msgs/AutopilotFeedback.h>
 
 // flightlib
 #include "flightlib/bridges/unity_bridge.hpp"
@@ -112,7 +114,7 @@ class FlightPilot {
 
   QuadState quad_state_;
 
-  // polynomial_trajectories::PolynomialTrajectory trajectory;
+  polynomial_trajectories::PolynomialTrajectory trajectory;
 
   manual_timer timer;
 

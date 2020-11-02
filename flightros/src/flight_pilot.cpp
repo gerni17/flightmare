@@ -75,7 +75,14 @@ FlightPilot::FlightPilot(const ros::NodeHandle &nh, const ros::NodeHandle &pnh)
 
 
 
- // Define path through gates
+
+  // wait until the gazebo and unity are loaded
+  ros::Duration(5.0).sleep();
+  // connect unity
+  setUnity(unity_render_);
+  connectUnity();
+
+    // Define path through gates
   std::vector<Eigen::Vector3d> way_points;
   way_points.push_back(Eigen::Vector3d(0, 10, 2.5));
   way_points.push_back(Eigen::Vector3d(5, 0, 2.5));
@@ -92,16 +99,10 @@ FlightPilot::FlightPilot(const ros::NodeHandle &nh, const ros::NodeHandle &pnh)
     polynomial_trajectories::PolynomialTrajectorySettings(
       way_points, minimization_weights, 7, 4);
 
-  polynomial_trajectories::PolynomialTrajectory trajectory =
+  trajectory =
     polynomial_trajectories::minimum_snap_trajectories::
       generateMinimumSnapRingTrajectory(segment_times, trajectory_settings,
                                         20.0, 20.0, 6.0);
-                                        
-  // wait until the gazebo and unity are loaded
-  ros::Duration(5.0).sleep();
-  // connect unity
-  setUnity(unity_render_);
-  connectUnity();
 
   timer.start();
 }

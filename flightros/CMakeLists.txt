@@ -52,6 +52,24 @@ target_link_libraries(flight_pilot_node
   stdc++fs
 )
 
+catkin_package(
+    LIBRARIES
+    CATKIN_DEPENDS
+    )
+
+    cs_add_executable(racing
+        src/racing.cpp
+    )
+
+    target_link_libraries(racing
+    ${catkin_LIBRARIES}
+    ${OpenCV_LIBRARIES}
+    stdc++fs
+    zmq
+    zmqpp
+    )
+
+
 # Finish
 cs_install()
 cs_export()

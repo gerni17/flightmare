@@ -2,26 +2,17 @@
 <launch>
   <arg name="quad_name" default="hummingbird"/>
 
+  <arg name="debug" default="0" />
 
 
-  <!-- RPG stuff !-->
-  <!-- <group ns="$(arg quad_name)"> -->
+  <node pkg="flightros" type="flight_pilot_node" name="flight_pilot_node" output="screen" launch-prefix="gdb -ex run --args" if="$(arg debug)">    
+    <rosparam file="$(find flightros)/params/default.yaml" />
+    <!-- <remap from="flight_pilot/state_estimate" to="ground_truth/odometry" /> -->
+  </node>
 
-
-    <node pkg="flightros" type="flight_pilot_node" name="flight_pilot_node" output="screen" launch-prefix="gdb -ex run --args">      <!--launch-prefix="gdb -ex run -args"-->
-      <rosparam file="$(find flightros)/params/default.yaml" />
-      <!-- <remap from="flight_pilot/state_estimate" to="ground_truth/odometry" /> -->
-    </node>
-
-    <!-- <node pkg="joy" type="joy_node" name="joy_node">
-      <param name="autorepeat_rate" value="10"/>
-    </node> -->
-
-    <!-- <node pkg="manual_flight_assistant" type="manual_flight_assistant" name="manual_flight_assistant" output="screen">
-      <rosparam file="$(find rpg_rotors_interface)/parameters/manual_flight_assistant.yaml"/>
-    </node> -->
-
-
-  <!-- </group> -->
+  <node pkg="flightros" type="flight_pilot_node" name="flight_pilot_node" output="screen" unless="$(arg debug)">    
+    <rosparam file="$(find flightros)/params/default.yaml" />
+    <!-- <remap from="flight_pilot/state_estimate" to="ground_truth/odometry" /> -->
+  </node>
 
 </launch>
