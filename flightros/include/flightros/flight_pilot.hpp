@@ -115,6 +115,7 @@ class FlightPilot {
   QuadState quad_state_;
 
   // polynomial_trajectories::PolynomialTrajectory trajectory;
+  std::unique_ptr<polynomial_trajectories::PolynomialTrajectory> trajectory_ptr;
 
   manual_timer timer;
 

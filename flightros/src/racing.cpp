@@ -112,6 +112,9 @@ int main(int argc, char *argv[]) {
     racing::quad_state_.x[QS::ATTY] = (Scalar)desired_pose.orientation.y();
     racing::quad_state_.x[QS::ATTZ] = (Scalar)desired_pose.orientation.z();
 
+      std::cout << desired_pose.position;
+
+
     racing::quad_ptr_->setState(racing::quad_state_);
 
     racing::unity_bridge_ptr_->getRender(0);

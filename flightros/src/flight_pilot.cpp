@@ -11,7 +11,7 @@ FlightPilot::FlightPilot(const ros::NodeHandle &nh, const ros::NodeHandle &pnh)
     unity_ready_(false),
     unity_render_(false),
     receive_id_(0),
-    main_loop_freq_(50.0) {
+    main_loop_freq_(10.0) {
   // load parameters
   if (!loadParams()) {
     ROS_WARN("[%s] Could not load all parameters.",
@@ -74,15 +74,13 @@ FlightPilot::FlightPilot(const ros::NodeHandle &nh, const ros::NodeHandle &pnh)
                                      &FlightPilot::mainLoopCallback, this);
 
 
-
-
   // wait until the gazebo and unity are loaded
   ros::Duration(5.0).sleep();
   // connect unity
   setUnity(unity_render_);
   connectUnity();
 
-    // Define path through gates
+  // Define path through gates
   std::vector<Eigen::Vector3d> way_points;
   way_points.push_back(Eigen::Vector3d(0, 10, 2.5));
   way_points.push_back(Eigen::Vector3d(5, 0, 2.5));
@@ -99,11 +97,16 @@ FlightPilot::FlightPilot(const ros::NodeHandle &nh, const ros::NodeHandle &pnh)
     polynomial_trajectories::PolynomialTrajectorySettings(
       way_points, minimization_weights, 7, 4);
 
-    polynomial_trajectories::PolynomialTrajectory trajectory =
-    polynomial_trajectories::minimum_snap_trajectories::
-      generateMinimumSnapRingTrajectory(segment_times, trajectory_settings,
-                                        20.0, 20.0, 6.0);
-
+  //  polynomial_trajectories::PolynomialTrajectory trajectory =
+  //  polynomial_trajectories::minimum_snap_trajectories::
+  //   generateMinimumSnapRingTrajectory(segment_times, trajectory_settings,
+  //                                     20.0, 20.0, 6.0);
+  // trajectory_ptr.reset(&trajectory);
+  trajectory_ptr =
+    std::make_unique<polynomial_trajectories::PolynomialTrajectory>(
+      polynomial_trajectories::minimum_snap_trajectories::
+        generateMinimumSnapRingTrajectory(segment_times, trajectory_settings,
+                                          20.0, 20.0, 6.0));
   timer.start();
 }
 
@@ -193,16 +196,19 @@ void FlightPilot::saveImages() {
 
 void FlightPilot::mainLoopCallback(const ros::TimerEvent &event) {
   // set positions
-  // quadrotor_common::TrajectoryPoint desired_pose =
-  //   polynomial_trajectories::getPointFromTrajectory(
-  //     trajectory, ros::Duration(timer.get() / 1000));
-  // quad_state_.x[QS::POSX] = (Scalar)desired_pose.position.x();
-  // quad_state_.x[QS::POSY] = (Scalar)desired_pose.position.y();
-  // quad_state_.x[QS::POSZ] = (Scalar)desired_pose.position.z();
-  // quad_state_.x[QS::ATTW] = (Scalar)desired_pose.orientation.w();
-  // quad_state_.x[QS::ATTX] = (Scalar)desired_pose.orientation.x();
-  // quad_state_.x[QS::ATTY] = (Scalar)desired_pose.orientation.y();
-  // quad_state_.x[QS::ATTZ] = (Scalar)desired_pose.orientation.z();
+  timer.stop();
+  quadrotor_common::TrajectoryPoint desired_pose =
+    polynomial_trajectories::getPointFromTrajectory(
+      *trajectory_ptr, ros::Duration(timer.get() / 10000));
+
+  quad_state_.x[QS::POSX] = desired_pose.position.x();
+  quad_state_.x[QS::POSY] = (Scalar)desired_pose.position.y();
+  quad_state_.x[QS::POSZ] = (Scalar)desired_pose.position.z();
+  quad_state_.x[QS::ATTW] = (Scalar)desired_pose.orientation.w();
+  quad_state_.x[QS::ATTX] = (Scalar)desired_pose.orientation.x();
+  quad_state_.x[QS::ATTY] = (Scalar)desired_pose.orientation.y();
+  quad_state_.x[QS::ATTZ] = (Scalar)desired_pose.orientation.z();
+  std::cout << desired_pose.position;
 
   quad_ptr_->setState(quad_state_);
 
