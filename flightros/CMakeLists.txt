@@ -6,7 +6,14 @@ find_package(catkin_simple REQUIRED)
 
 find_package(OpenCV REQUIRED)
 
+option(BUILD_SAMPLES "Building the samples" OFF)
+
 catkin_simple()
+
+catkin_package(
+    LIBRARIES
+    CATKIN_DEPENDS
+    )
 
 # Setup Default Build Type as Release
 if (NOT CMAKE_BUILD_TYPE)
@@ -27,19 +34,25 @@ endif ()
 # Setup General C++ Flags
 SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17")
 SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DEIGEN_STACK_ALLOCATION_LIMIT=1048576")
+add_compile_options(-O3)
+
 
 # Setup Release and Debug flags
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS} ${CMAKE_CXX_ARCH_FLAGS} -Wall -DNDEBUG -fPIC")
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS} -Wall -g")
+
+#pilot
 
 cs_add_library(flight_pilot
     src/flight_pilot.cpp
 )
 
 target_link_libraries(flight_pilot
-  ${catkin_LIBRARIES}
-  ${OpenCV_LIBRARIES}
-  stdc++fs
+${catkin_LIBRARIES}
+${OpenCV_LIBRARIES}
+stdc++fs
+zmq
+zmqpp
 )
 
 cs_add_executable(flight_pilot_node
@@ -47,15 +60,18 @@ cs_add_executable(flight_pilot_node
 )
 
 target_link_libraries(flight_pilot_node
-  flight_pilot
-  ${OpenCV_LIBRARIES}
-  stdc++fs
+flight_pilot
+${catkin_LIBRARIES}
+${OpenCV_LIBRARIES}
+stdc++fs
+zmq
+zmqpp
 )
 
-catkin_package(
-    LIBRARIES
-    CATKIN_DEPENDS
-    )
+
+
+# racing
+
 
     cs_add_executable(racing
         src/racing.cpp
@@ -68,6 +84,8 @@ catkin_package(
     zmq
     zmqpp
     )
+
+
 
 
 # Finish

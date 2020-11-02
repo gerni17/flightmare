@@ -114,7 +114,7 @@ class FlightPilot {
 
   QuadState quad_state_;
 
-  polynomial_trajectories::PolynomialTrajectory trajectory;
+  // polynomial_trajectories::PolynomialTrajectory trajectory;
 
   manual_timer timer;
 

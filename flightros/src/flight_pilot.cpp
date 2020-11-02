@@ -99,7 +99,7 @@ FlightPilot::FlightPilot(const ros::NodeHandle &nh, const ros::NodeHandle &pnh)
     polynomial_trajectories::PolynomialTrajectorySettings(
       way_points, minimization_weights, 7, 4);
 
-  trajectory =
+    polynomial_trajectories::PolynomialTrajectory trajectory =
     polynomial_trajectories::minimum_snap_trajectories::
       generateMinimumSnapRingTrajectory(segment_times, trajectory_settings,
                                         20.0, 20.0, 6.0);
