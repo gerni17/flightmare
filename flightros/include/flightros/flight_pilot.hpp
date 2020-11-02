@@ -1,11 +1,21 @@
 
 #pragma once
 
+// standard libraries
+#include <assert.h>
+#include <Eigen/Dense>
 #include <chrono>
-#include <ctime>
+#include <cmath>
+#include <cstring>
 #include <fstream>
-#include <memory>
+#include <iostream>
+#include <iterator>
+#include <sstream>
+#include <thread>
 #include <vector>
+#include <ctime>
+#include <memory>
+
 
 #define ImageFloatType float
 
@@ -30,10 +40,33 @@
 #include "flightlib/sensors/event_camera.hpp"
 #include "flightlib/sensors/rgb_camera.hpp"
 
+// trajectory
+#include <polynomial_trajectories/minimum_snap_trajectories.h>
+#include <polynomial_trajectories/polynomial_trajectories_common.h>
+#include <polynomial_trajectories/polynomial_trajectory.h>
+#include <polynomial_trajectories/polynomial_trajectory_settings.h>
+#include <quadrotor_common/trajectory_point.h>
+
 using namespace flightlib;
 using OpticFlow = cv::Mat_<cv::Vec<ImageFloatType, 2>>;
 
 namespace flightros {
+
+class manual_timer {
+  std::chrono::high_resolution_clock::time_point t0;
+  double timestamp{0.0};
+
+ public:
+  void start() { t0 = std::chrono::high_resolution_clock::now(); }
+  void stop() {
+    timestamp = std::chrono::duration<double>(
+                  std::chrono::high_resolution_clock::now() - t0)
+                  .count() *
+                1000.0;
+  }
+  const double& get() { return timestamp; }
+};
+
 
 class FlightPilot {
  public:
@@ -49,7 +82,6 @@ class FlightPilot {
   bool connectUnity(void);
   bool loadParams(void);
   void writeCSV(std::string filename, cv::Mat m);
-  void calcopticalFlow();
   void saveCSV();
   void saveImages();
   void calculateHist(cv::Mat bgr_planes[3]);
@@ -76,9 +108,13 @@ class FlightPilot {
   std::shared_ptr<Quadrotor> quad_ptr_;
   std::shared_ptr<RGBCamera> rgb_camera_;
   std::shared_ptr<EventCamera> event_camera_;
-    std::shared_ptr<EventCamera> event_camera_2;
-  
+  std::shared_ptr<EventCamera> event_camera_2;
+
   QuadState quad_state_;
+
+  // polynomial_trajectories::PolynomialTrajectory trajectory;
+
+  manual_timer timer;
 
   // Flightmare(Unity3D)
   std::shared_ptr<UnityBridge> unity_bridge_ptr_;
@@ -91,7 +127,8 @@ class FlightPilot {
   cv::Mat prev, curr, bgr_, rgb_img;
   cv::Mat bgr[3];
   cv::Mat optical_flow_image;
-  cv::Mat event_image;
+  cv::Mat reconstr_event_image;
+  cv::Mat rgb_image;
 
   // auxiliary variables
   Scalar main_loop_freq_{50.0};

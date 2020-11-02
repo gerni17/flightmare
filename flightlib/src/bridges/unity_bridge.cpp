@@ -298,59 +298,50 @@ bool UnityBridge::handleOutput() {
     }
     // feed events to the eventcamera
     for (const auto& cam : settings_.vehicles[idx].eventcameras) {
-      // uint32_t buff_len = 449800 * 16;
+      uint32_t image_len = cam.width * cam.height * cam.channels;
+      // Get raw image bytes from ZMQ message.
+      // WARNING: This is a zero-copy operation that also casts the input to
+      // an array of unit8_t. when the message is deleted, this pointer is
+      // also dereferenced.
+      const uint8_t* image_data;
+      msg.get(image_data, image_i);
+      image_i = image_i + 1;
+      // Pack image into cv::Mat
+      cv::Mat new_image =
+        cv::Mat(cam.height, cam.width, CV_MAKETYPE(CV_8U, cam.channels));
+      memcpy(new_image.data, image_data, image_len);
+      if (new_image.empty()) {
+        logger_.warn("the image is empty");
 
-      // const uint8_t* data_ptr;
-      // msg.get(data_ptr, image_i);
-      // image_i = image_i + 1;
-
-      // std::vector<Event> events;
-      // events.resize(449800);
-      // if (events.max_size() < (buff_len)) {
-      //   logger_.warn("too big");
-      //   // logger_.warn(buff_len.ToString());
-      // }
-
-
-      // // // // json::parse(json_msg).at(image_i).get<std::vector<Event_t>>();
-
-      // memcpy(events.data(), data_ptr, buff_len);
-
-
-      // if (events.empty()) {
-      //   logger_.warn("the image is empty");
-      // }
-      // std::string json_msg;
-      // json_msg.resize(msg.size(image_i));
-      // std::string json_msg = msg.get(image_i);
-      // image_i = image_i + 1;
-      // logger_.warn("pre-reading");
-      // EventsMessage_t events_ = json::parse(json_msg).get<EventsMessage_t>();
-      // logger_.warn("pre-reading");
-
-
+        return false;
+      }
       // Flip image since OpenCV origin is upper left, but Unity's is lower
       // left.
-      // cv::flip(new_image, new_image, 0);
+      cv::flip(new_image, new_image, 0);
 
       // Tell OpenCv that the input is RGB.
-      // if (cam.channels == 3) {
-      //   cv::cvtColor(new_image, new_image, CV_RGB2BGR);
-      // }
-      // for (auto event : events_.events) {
-      //   std::string amount = std::to_string(event.coord_x);
-      //   logger_.warn(amount);
-      // }
-      // unity_quadrotors_[idx]
-      //   ->getEventCameras()[cam.output_index]
-      //   ->feedEventQueue(events_.events);
+      if (cam.channels == 3) {
+        cv::cvtColor(new_image, new_image, CV_RGB2BGR);
+      }
+      unity_quadrotors_[idx]
+        ->getEventCameras()[cam.output_index]
+        ->feedImageQueue(new_image);
+      // store events
+      std::string json_msg = msg.get(image_i);
+      image_i = image_i + 1;
+
+      EventsMessage_t events_ = json::parse(json_msg).get<EventsMessage_t>();
+
+      unity_quadrotors_[idx]
+        ->getEventCameras()[cam.output_index]
+        ->feedEventQueue(events_.events);
 
       std::string time_msg = msg.get(image_i);
       image_i = image_i + 1;
       TimeMessage_t timestep = json::parse(time_msg).get<TimeMessage_t>();
-      logger_.warn("pre-reading");
       std::string amount = std::to_string(timestep.next_timestep);
-      logger_.warn(amount);
+      logger_.info("Next timestep:");
+      logger_.info(amount);
     }
   }
 

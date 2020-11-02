@@ -74,104 +74,97 @@ FlightPilot::FlightPilot(const ros::NodeHandle &nh, const ros::NodeHandle &pnh)
                                      &FlightPilot::mainLoopCallback, this);
 
 
+
+ // Define path through gates
+  std::vector<Eigen::Vector3d> way_points;
+  way_points.push_back(Eigen::Vector3d(0, 10, 2.5));
+  way_points.push_back(Eigen::Vector3d(5, 0, 2.5));
+  way_points.push_back(Eigen::Vector3d(0, -10, 2.5));
+  way_points.push_back(Eigen::Vector3d(-5, 0, 2.5));
+
+  std::size_t num_waypoints = way_points.size();
+  Eigen::VectorXd segment_times(num_waypoints);
+  segment_times << 10.0, 10.0, 10.0, 10.0;
+  Eigen::VectorXd minimization_weights(num_waypoints);
+  minimization_weights << 1.0, 1.0, 1.0, 1.0;
+
+  polynomial_trajectories::PolynomialTrajectorySettings trajectory_settings =
+    polynomial_trajectories::PolynomialTrajectorySettings(
+      way_points, minimization_weights, 7, 4);
+
+  polynomial_trajectories::PolynomialTrajectory trajectory =
+    polynomial_trajectories::minimum_snap_trajectories::
+      generateMinimumSnapRingTrajectory(segment_times, trajectory_settings,
+                                        20.0, 20.0, 6.0);
+                                        
   // wait until the gazebo and unity are loaded
   ros::Duration(5.0).sleep();
-
   // connect unity
   setUnity(unity_render_);
   connectUnity();
+
+  timer.start();
 }
 
 FlightPilot::~FlightPilot() {}
 
 void FlightPilot::poseCallback(const nav_msgs::Odometry::ConstPtr &msg) {
+  // quad_state_.x[QS::POSX] = (Scalar)msg->pose.pose.position.x;
+  // quad_state_.x[QS::POSY] = (Scalar)msg->pose.pose.position.y;
+  // quad_state_.x[QS::POSZ] = (Scalar)msg->pose.pose.position.z;
+  // quad_state_.x[QS::ATTW] = (Scalar)msg->pose.pose.orientation.w;
+  // quad_state_.x[QS::ATTX] = (Scalar)msg->pose.pose.orientation.x;
+  // quad_state_.x[QS::ATTY] = (Scalar)msg->pose.pose.orientation.y;
+  // quad_state_.x[QS::ATTZ] = (Scalar)msg->pose.pose.orientation.z;
+  // //
+  // quad_ptr_->setState(quad_state_);
 
-  quad_state_.x[QS::POSX] = (Scalar)msg->pose.pose.position.x;
-  quad_state_.x[QS::POSY] = (Scalar)msg->pose.pose.position.y;
-  quad_state_.x[QS::POSZ] = (Scalar)msg->pose.pose.position.z;
-  quad_state_.x[QS::ATTW] = (Scalar)msg->pose.pose.orientation.w;
-  quad_state_.x[QS::ATTX] = (Scalar)msg->pose.pose.orientation.x;
-  quad_state_.x[QS::ATTY] = (Scalar)msg->pose.pose.orientation.y;
-  quad_state_.x[QS::ATTZ] = (Scalar)msg->pose.pose.orientation.z;
-  //
-  quad_ptr_->setState(quad_state_);
+  // if (unity_render_ && unity_ready_) {
+  //   unity_bridge_ptr_->getRender(0);
+  //   unity_bridge_ptr_->handleOutput();
 
-  if (unity_render_ && unity_ready_) {
-    unity_bridge_ptr_->getRender(0);
-    unity_bridge_ptr_->handleOutput();
+  //   // cv::Mat rgb_img;
 
-    // cv::Mat rgb_img;
+  //   rgb_camera_->getOpticalFlow(optical_flow_image);
+  //   rgb_camera_->getRGBImage(rgb_img);
+  //   // event_camera_->getEvents(event_image);
+  //   cv::split(optical_flow_image, bgr);
+  //   // handle events to put in main loop, maybe put some checks
+  //   // this function should be removed in the future
+  //   event_image = event_camera_->createEventimages();
 
-    rgb_camera_->getOpticalFlow(optical_flow_image);
-    rgb_camera_->getRGBImage(rgb_img);
-    // event_camera_->getEvents(event_image);
-    cv::split(optical_flow_image, bgr);
-    // handle events to put in main loop, maybe put some checks
-    // this function should be removed in the future
-    event_image = event_camera_->createEventimages();
-
-    // // // calculate the opticalflow with opencv
-    // if (counter != 0) {
-    //   calcopticalFlow();
-    // }
-    // cv::cvtColor(rgb_img, prev, cv::COLOR_BGR2GRAY);
+  //   // // // calculate the opticalflow with opencv
+  //   // if (counter != 0) {
+  //   //   calcopticalFlow();
+  //   // }
+  //   // cv::cvtColor(rgb_img, prev, cv::COLOR_BGR2GRAY);
 
 
-    // // // publish the images of server in ros env
-    sensor_msgs::ImagePtr rgb_msg =
-      cv_bridge::CvImage(std_msgs::Header(), "bgr8", rgb_img).toImageMsg();
-    sensor_msgs::ImagePtr of_msg =
-      cv_bridge::CvImage(std_msgs::Header(), "bgr8", optical_flow_image).toImageMsg();
-    sensor_msgs::ImagePtr ev_msg =
-      cv_bridge::CvImage(std_msgs::Header(), "bgr8", event_image).toImageMsg();
-    cv_pub_.publish(ev_msg);
-    rgb_pub_.publish(rgb_msg);
-    of_pub_.publish(of_msg);
+  //   // // // publish the images of server in ros env
+  //   sensor_msgs::ImagePtr rgb_msg =
+  //     cv_bridge::CvImage(std_msgs::Header(), "bgr8", rgb_img).toImageMsg();
+  //   sensor_msgs::ImagePtr of_msg =
+  //     cv_bridge::CvImage(std_msgs::Header(), "bgr8", optical_flow_image)
+  //       .toImageMsg();
+  //   sensor_msgs::ImagePtr ev_msg =
+  //     cv_bridge::CvImage(std_msgs::Header(), "bgr8",
+  //     event_image).toImageMsg();
+  //   cv_pub_.publish(ev_msg);
+  //   rgb_pub_.publish(rgb_msg);
+  //   of_pub_.publish(of_msg);
 
-    // saveImages();
-    if (counter % 100 == 0) {
-      auto time = std::chrono::system_clock::now();
-      std::time_t end_time = std::chrono::system_clock::to_time_t(time);
-      ROS_INFO_STREAM("time " << std::ctime(&end_time));
-    }
-    saveImages();
-    // saveCSV();  // only useful if checking the motion vectors
-    counter++;
-  }
-}
-
-void FlightPilot::calcopticalFlow() {
-  // cv::Mat next;
-  // curr = rgb_img;
-  // cv::cvtColor(curr, next, cv::COLOR_BGR2GRAY);
-  // cv::Mat flow(prev.size(), CV_32FC2);
-
-  // calcOpticalFlowFarneback(prev, next, flow, 0.5, 3, 15, 3, 5, 1.2, 0);
-  // // visualization
-  // cv::Mat flow_parts[2];
-  // split(flow, flow_parts);
-  // cv::Mat magnitude, angle, magn_norm;
-  // cartToPolar(flow_parts[0], flow_parts[1], magnitude, angle, true);
-  // normalize(magnitude, magn_norm, 0.0f, 1.0f, cv::NORM_MINMAX);
-  // angle *= ((1.f / 360.f) * (180.f / 255.f));
-  // // build hsv image
-  // cv::Mat _hsv[3], hsv, hsv8;
-  // _hsv[0] = angle;
-  // _hsv[1] = cv::Mat::ones(angle.size(), CV_32F);
-  // _hsv[2] = magn_norm;
-  // cv::merge(_hsv, 3, hsv);
-  // hsv.convertTo(hsv8, CV_8U, 255.0);
-  // cvtColor(hsv8, bgr_, cv::COLOR_HSV2BGR);
-
-  // if (counter == 100) {
-  //   calculateHist(flow_parts);
+  //   // saveImages();
+  //   if (counter % 100 == 0) {
+  //     auto time = std::chrono::system_clock::now();
+  //     std::time_t end_time = std::chrono::system_clock::to_time_t(time);
+  //     ROS_INFO_STREAM("time " << std::ctime(&end_time));
+  //   }
+  //   saveImages();
+  //   // saveCSV();  // only useful if checking the motion vectors
+  //   counter++;
   // }
-
-  // // publish the image
-  // sensor_msgs::ImagePtr cv_msg =
-  //   cv_bridge::CvImage(std_msgs::Header(), "bgr8", bgr_).toImageMsg();
-  // cv_pub_.publish(cv_msg);
 }
+
 
 void FlightPilot::saveCSV() {
   // // save csv files of motion
@@ -191,14 +184,64 @@ void FlightPilot::saveImages() {
     "/home/gian/flightmare/rgb/rgb" + std::to_string(counter) + ".png";
   ROS_INFO_STREAM("written to " << path);
   cv::imwrite(path_rgb, rgb_img);
-  cv::imwrite(path, event_image);
+  cv::imwrite(path, reconstr_event_image);
   // std::string path_ = "/home/gian/flightmare/calculated_of/calculated_img_" +
   //                     std::to_string(counter) + ".png";
   // cv::imwrite(path_, bgr_);
 }
 
 void FlightPilot::mainLoopCallback(const ros::TimerEvent &event) {
-  // handle events
+  // set positions
+  // quadrotor_common::TrajectoryPoint desired_pose =
+  //   polynomial_trajectories::getPointFromTrajectory(
+  //     trajectory, ros::Duration(timer.get() / 1000));
+  // quad_state_.x[QS::POSX] = (Scalar)desired_pose.position.x();
+  // quad_state_.x[QS::POSY] = (Scalar)desired_pose.position.y();
+  // quad_state_.x[QS::POSZ] = (Scalar)desired_pose.position.z();
+  // quad_state_.x[QS::ATTW] = (Scalar)desired_pose.orientation.w();
+  // quad_state_.x[QS::ATTX] = (Scalar)desired_pose.orientation.x();
+  // quad_state_.x[QS::ATTY] = (Scalar)desired_pose.orientation.y();
+  // quad_state_.x[QS::ATTZ] = (Scalar)desired_pose.orientation.z();
+
+  quad_ptr_->setState(quad_state_);
+
+  if (unity_render_ && unity_ready_) {
+    unity_bridge_ptr_->getRender(0);
+    unity_bridge_ptr_->handleOutput();
+
+    // cv::Mat rgb_img;
+
+    rgb_camera_->getOpticalFlow(optical_flow_image);
+    // rgb_camera_->getRGBImage(rgb_img);
+    event_camera_->getRGBImage(rgb_img);
+    // handle events to put in main loop, maybe put some checks
+    // this function should be removed in the future
+    reconstr_event_image = event_camera_->createEventimages();
+
+
+    // // // publish the images of server in ros env
+    sensor_msgs::ImagePtr rgb_msg =
+      cv_bridge::CvImage(std_msgs::Header(), "bgr8", rgb_img).toImageMsg();
+    sensor_msgs::ImagePtr of_msg =
+      cv_bridge::CvImage(std_msgs::Header(), "bgr8", optical_flow_image)
+        .toImageMsg();
+    sensor_msgs::ImagePtr reconstr_ev_msg =
+      cv_bridge::CvImage(std_msgs::Header(), "bgr8", reconstr_event_image)
+        .toImageMsg();
+    cv_pub_.publish(reconstr_ev_msg);
+    rgb_pub_.publish(rgb_msg);
+    of_pub_.publish(of_msg);
+
+    // saveImages();
+    if (counter % 100 == 0) {
+      auto time = std::chrono::system_clock::now();
+      std::time_t end_time = std::chrono::system_clock::to_time_t(time);
+      ROS_INFO_STREAM("time " << std::ctime(&end_time));
+    }
+    saveImages();
+    // saveCSV();  // only useful if checking the motion vectors
+    counter++;
+  }
 }
 
 bool FlightPilot::setUnity(const bool render) {

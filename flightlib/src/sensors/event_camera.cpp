@@ -169,20 +169,30 @@ cv::Mat EventCamera::createEventimages() {
   return image;
 }
 
+bool EventCamera::feedImageQueue(const cv::Mat& image_mat) {
+  queue_mutex_.lock();
+
+  if (rgb_queue_.size() > queue_size_) rgb_queue_.resize(queue_size_);
+  rgb_queue_.push_back(image_mat);
+
+  queue_mutex_.unlock();
+  return true;
+}
+
 
 // take event cue and choose first 50events
 
 // for eac event check that time is different thn zero
 // put those event into matrix
-// }  // namespace flightlib
-// bool EventCamera::getRGBImage(cv::Mat& rgb_img) {
-//   if (!rgb_queue_.empty()) {
-//     rgb_img = rgb_queue_.front();
-//     rgb_queue_.pop_front();
-//     return true;
-//   }
-//   return false;
-// }
+
+bool EventCamera::getRGBImage(cv::Mat& rgb_img) {
+  if (!rgb_queue_.empty()) {
+    rgb_img = rgb_queue_.front();
+    rgb_queue_.pop_front();
+    return true;
+  }
+  return false;
+}
 
 // bool EventCamera::getDepthMap(cv::Mat& depth_map) {
 //   if (!depth_queue_.empty()) {

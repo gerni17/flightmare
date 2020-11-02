@@ -36,6 +36,7 @@ class EventCamera : SensorBase {
   bool setFOV(const Scalar fov);
   // bool setDepthScale(const Scalar depth_scale);
   // bool setPostProcesscing(const std::vector<bool>& enabled_layers);
+  bool feedImageQueue(const cv::Mat& image_mat);
   bool feedEventImageQueue(const cv::Mat& image_mat);
   bool feedEventQueue(const std::vector<Event_t>& events);
 
@@ -48,7 +49,7 @@ class EventCamera : SensorBase {
   int getHeight(void) const;
   Scalar getFOV(void) const;
   // Scalar getDepthScale(void) const;
-  // bool getRGBImage(cv::Mat& rgb_img);
+  bool getRGBImage(cv::Mat& rgb_img);
   // bool getDepthMap(cv::Mat& depth_map);
   // bool getSegmentation(cv::Mat& segmentation);
   // bool getOpticalFlow(cv::Mat& opticalflow);
@@ -80,6 +81,7 @@ class EventCamera : SensorBase {
   std::mutex queue_mutex_;
   const int queue_size_ = 1;
 
+  std::deque<cv::Mat> rgb_queue_;
   std::deque<cv::Mat> event_image_queue_;
   std::deque<std::vector<Event_t>> event_queue_;
   std::vector<Event_t> event_queue_for_img;
