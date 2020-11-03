@@ -26,6 +26,7 @@
 #include "flightlib/objects/quadrotor.hpp"
 #include "flightlib/objects/static_gate.hpp"
 #include "flightlib/sensors/rgb_camera.hpp"
+#include "flightlib/sensors/event_camera.hpp"
 
 // trajectory
 #include <polynomial_trajectories/minimum_snap_trajectories.h>
@@ -60,6 +61,7 @@ bool connectUnity(void);
 // unity quadrotor
 std::shared_ptr<Quadrotor> quad_ptr_;
 std::shared_ptr<RGBCamera> rgb_camera_;
+std::shared_ptr<EventCamera> event_camera_;
 QuadState quad_state_;
 
 // Flightmare(Unity3D)

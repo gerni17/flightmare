@@ -77,6 +77,16 @@ bool EventCamera::setFOV(const Scalar fov) {
   return true;
 }
 
+bool EventCamera::changeTime(float timestep) {
+  if (timestep <= 0.0) {
+    logger_.warn("timestep is zeero or invalid");
+    return false;
+  }
+  sim_time += timestep;
+  return true;
+}
+double EventCamera::getSimTime() { return sim_time; }
+
 // bool EventCamera::setDepthScale(const Scalar depth_scale) {
 //   if (depth_scale_ < 0.0 || depth_scale_ > 1.0) {
 //     logger_.warn(

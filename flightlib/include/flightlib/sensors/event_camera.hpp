@@ -34,6 +34,8 @@ class EventCamera : SensorBase {
   bool setWidth(const int width);
   bool setHeight(const int height);
   bool setFOV(const Scalar fov);
+  bool changeTime(float timestep);
+  double getSimTime();
   // bool setDepthScale(const Scalar depth_scale);
   // bool setPostProcesscing(const std::vector<bool>& enabled_layers);
   bool feedImageQueue(const cv::Mat& image_mat);
@@ -72,6 +74,7 @@ class EventCamera : SensorBase {
   int height_;
   Scalar fov_;
   // Scalar depth_scale_;
+  double sim_time = 0.0;
 
   // Camera relative
   Vector<3> B_r_BC_;

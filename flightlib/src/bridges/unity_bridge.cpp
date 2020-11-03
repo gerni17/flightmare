@@ -342,6 +342,9 @@ bool UnityBridge::handleOutput() {
       std::string amount = std::to_string(timestep.next_timestep);
       logger_.info("Next timestep:");
       logger_.info(amount);
+      unity_quadrotors_[idx]
+        ->getEventCameras()[cam.output_index]
+        ->changeTime(timestep.next_timestep);
     }
   }
 

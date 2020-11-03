@@ -29,6 +29,7 @@ int main(int argc, char *argv[]) {
   racing::quad_ptr_ = std::make_unique<Quadrotor>();
   // add camera
   racing::rgb_camera_ = std::make_unique<RGBCamera>();
+  racing::event_camera_ = std::make_unique<EventCamera>();
 
   // Flightmare
   Vector<3> B_r_BC(0.0, 0.0, 0.3);
@@ -41,6 +42,11 @@ int main(int argc, char *argv[]) {
   racing::rgb_camera_->setPostProcesscing(std::vector<bool>{
     false, false, false});  // depth, segmentation, optical flow
   racing::quad_ptr_->addRGBCamera(racing::rgb_camera_);
+  racing::event_camera_->setFOV(90);
+  racing::event_camera_->setWidth(346);
+  racing::event_camera_->setHeight(260);
+  racing::event_camera_->setRelPose(B_r_BC, R_BC);
+  racing::quad_ptr_->addEventCamera(racing::event_camera_);
 
   // // initialization
   racing::quad_state_.setZero();
@@ -103,7 +109,8 @@ int main(int argc, char *argv[]) {
 
     quadrotor_common::TrajectoryPoint desired_pose =
       polynomial_trajectories::getPointFromTrajectory(
-        trajectory, ros::Duration(timer.get() / 1000));
+        trajectory, ros::Duration(racing::event_camera_->getSimTime()));
+
     racing::quad_state_.x[QS::POSX] = (Scalar)desired_pose.position.x();
     racing::quad_state_.x[QS::POSY] = (Scalar)desired_pose.position.y();
     racing::quad_state_.x[QS::POSZ] = (Scalar)desired_pose.position.z();
@@ -112,13 +119,17 @@ int main(int argc, char *argv[]) {
     racing::quad_state_.x[QS::ATTY] = (Scalar)desired_pose.orientation.y();
     racing::quad_state_.x[QS::ATTZ] = (Scalar)desired_pose.orientation.z();
 
-      std::cout << desired_pose.position;
+    std::cout << desired_pose.position;
 
 
     racing::quad_ptr_->setState(racing::quad_state_);
 
     racing::unity_bridge_ptr_->getRender(0);
     racing::unity_bridge_ptr_->handleOutput();
+
+
+
+
   }
 
   return 0;

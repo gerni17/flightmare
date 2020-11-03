@@ -11,7 +11,7 @@ FlightPilot::FlightPilot(const ros::NodeHandle &nh, const ros::NodeHandle &pnh)
     unity_ready_(false),
     unity_render_(false),
     receive_id_(0),
-    main_loop_freq_(10.0) {
+    main_loop_freq_(50.0) {
   // load parameters
   if (!loadParams()) {
     ROS_WARN("[%s] Could not load all parameters.",
@@ -89,7 +89,7 @@ FlightPilot::FlightPilot(const ros::NodeHandle &nh, const ros::NodeHandle &pnh)
 
   std::size_t num_waypoints = way_points.size();
   Eigen::VectorXd segment_times(num_waypoints);
-  segment_times << 10.0, 10.0, 10.0, 10.0;
+  segment_times << 20.0, 20.0, 20.0, 20.0;
   Eigen::VectorXd minimization_weights(num_waypoints);
   minimization_weights << 1.0, 1.0, 1.0, 1.0;
 
@@ -196,23 +196,27 @@ void FlightPilot::saveImages() {
 
 void FlightPilot::mainLoopCallback(const ros::TimerEvent &event) {
   // set positions
-  timer.stop();
-  quadrotor_common::TrajectoryPoint desired_pose =
-    polynomial_trajectories::getPointFromTrajectory(
-      *trajectory_ptr, ros::Duration(timer.get() / 10000));
-
-  quad_state_.x[QS::POSX] = desired_pose.position.x();
-  quad_state_.x[QS::POSY] = (Scalar)desired_pose.position.y();
-  quad_state_.x[QS::POSZ] = (Scalar)desired_pose.position.z();
-  quad_state_.x[QS::ATTW] = (Scalar)desired_pose.orientation.w();
-  quad_state_.x[QS::ATTX] = (Scalar)desired_pose.orientation.x();
-  quad_state_.x[QS::ATTY] = (Scalar)desired_pose.orientation.y();
-  quad_state_.x[QS::ATTZ] = (Scalar)desired_pose.orientation.z();
-  std::cout << desired_pose.position;
-
-  quad_ptr_->setState(quad_state_);
-
   if (unity_render_ && unity_ready_) {
+    timer.stop();
+    quadrotor_common::TrajectoryPoint desired_pose =
+      polynomial_trajectories::getPointFromTrajectory(
+        *trajectory_ptr, ros::Duration(event_camera_->getSimTime()));
+
+    quad_state_.x[QS::POSX] = (Scalar)desired_pose.position.x();
+    quad_state_.x[QS::POSY] = (Scalar)desired_pose.position.y();
+    quad_state_.x[QS::POSZ] = (Scalar)desired_pose.position.z();
+    quad_state_.x[QS::ATTW] = (Scalar)desired_pose.orientation.w();
+    quad_state_.x[QS::ATTX] = (Scalar)desired_pose.orientation.x();
+    quad_state_.x[QS::ATTY] = (Scalar)desired_pose.orientation.y();
+    quad_state_.x[QS::ATTZ] = (Scalar)desired_pose.orientation.z();
+
+    std::cout << desired_pose.position << std::endl;
+
+    std::cout << "Timer" << ros::Duration(timer.get() / 1000)<< std::endl;
+    std::cout << "simtime" << ros::Duration(event_camera_->getSimTime()) << std::endl;
+    quad_ptr_->setState(quad_state_);
+
+
     unity_bridge_ptr_->getRender(0);
     unity_bridge_ptr_->handleOutput();
 
