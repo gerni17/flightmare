@@ -7,6 +7,7 @@
 
 // standard libraries
 #include <assert.h>
+
 #include <Eigen/Dense>
 #include <chrono>
 #include <cmath>
@@ -25,8 +26,8 @@
 #include "flightlib/common/types.hpp"
 #include "flightlib/objects/quadrotor.hpp"
 #include "flightlib/objects/static_gate.hpp"
-#include "flightlib/sensors/rgb_camera.hpp"
 #include "flightlib/sensors/event_camera.hpp"
+#include "flightlib/sensors/rgb_camera.hpp"
 
 // trajectory
 #include <polynomial_trajectories/minimum_snap_trajectories.h>
@@ -57,6 +58,11 @@ class manual_timer {
 // void setupQuad();
 bool setUnity(const bool render);
 bool connectUnity(void);
+
+
+// publisher
+image_transport::Publisher rgb_pub_;
+cv::Mat rgb_image;
 
 // unity quadrotor
 std::shared_ptr<Quadrotor> quad_ptr_;

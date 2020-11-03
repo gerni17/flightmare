@@ -24,6 +24,7 @@ int main(int argc, char *argv[]) {
   ros::NodeHandle nh("");
   ros::NodeHandle pnh("~");
   ros::Rate(50.0);
+  image_transport::ImageTransport my_image_transport(nh);
 
   // quad initialization
   racing::quad_ptr_ = std::make_unique<Quadrotor>();
@@ -68,6 +69,10 @@ int main(int argc, char *argv[]) {
   gate_2->setRotation(
     Quaternion(std::cos(0.5 * M_PI_2), 0.0, 0.0, std::sin(0.5 * M_PI_2)));
 
+  // ROS
+  racing::rgb_pub_ = my_image_transport.advertise("camera/rgb_image", 1);
+
+
   // Set unity bridge
   racing::setUnity(racing::unity_render_);
 
@@ -109,7 +114,8 @@ int main(int argc, char *argv[]) {
 
     quadrotor_common::TrajectoryPoint desired_pose =
       polynomial_trajectories::getPointFromTrajectory(
-        trajectory, ros::Duration(racing::event_camera_->getSimTime()));
+        // trajectory, ros::Duration(timer.get()/1000));
+    trajectory, ros::Duration(racing::event_camera_->getSimTime()));
 
     racing::quad_state_.x[QS::POSX] = (Scalar)desired_pose.position.x();
     racing::quad_state_.x[QS::POSY] = (Scalar)desired_pose.position.y();
@@ -127,9 +133,11 @@ int main(int argc, char *argv[]) {
     racing::unity_bridge_ptr_->getRender(0);
     racing::unity_bridge_ptr_->handleOutput();
 
-
-
-
+    racing::event_camera_->getRGBImage(racing::rgb_image);
+    sensor_msgs::ImagePtr rgb_msg =
+      cv_bridge::CvImage(std_msgs::Header(), "bgr8",
+      racing::rgb_image).toImageMsg();
+    racing::rgb_pub_.publish(rgb_msg);
   }
 
   return 0;
