@@ -21,6 +21,7 @@ bool EventCamera::feedEventQueue(const std::vector<Event_t>& events) {
   // std::vector<Event> e(events.size()) ;
   event_queue_for_img.resize(events.size());
   event_queue_for_img = events;
+  event_queue_for_test=events;
   queue_mutex_.unlock();
   std::string amount = std::to_string(event_queue_for_img.size());
   logger_.warn(amount);
@@ -127,7 +128,7 @@ Scalar EventCamera::getFOV(void) const { return fov_; }
 // Scalar EventCamera::getDepthScale(void) const { return depth_scale_; }
 
 bool EventCamera::getEventImages(cv::Mat& event) {
-  if (!event_queue_.empty()) {
+  if (!event_image_queue_.empty()) {
     // seems wrong here
     event = event_image_queue_.front();
     event_image_queue_.pop_front();
@@ -135,6 +136,19 @@ bool EventCamera::getEventImages(cv::Mat& event) {
   }
   return false;
 }
+
+std::vector<Event_t> EventCamera::getEvents() {
+  std::vector<Event_t> events;
+  if (!event_queue_.empty()) {
+    // seems wrong here
+    events = event_queue_for_test;
+    event_queue_for_test.clear();
+    return events;
+  }
+  logger_.error("empty events buffer");
+  return events;
+}
+
 cv::Mat EventCamera::createEventimages() {
   int wid = getWidth();
   int hei = getHeight();
@@ -147,8 +161,8 @@ cv::Mat EventCamera::createEventimages() {
   // image.at<cv::Vec3b>(10, 10)[2] = 255;
 
   int count = 0;
-  events = event_queue_for_img;
-  // event_queue_for_img.clear();
+  events = event_queue_for_test;
+  event_queue_for_test.clear();
   for (auto event : events) {
     if (event.coord_x > wid || event.coord_y > hei) {
       logger_.error("coord out of the image");

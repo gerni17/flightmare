@@ -29,12 +29,6 @@ enum UnityScene {
   SceneNum = 4
 };
 
-// struct Event_t {
-//   int coord_x;
-//   int coord_y;
-//   int polarity;
-//   float time;
-// };
 
 struct EventsMessage_t {
   std::vector<Event_t> events;

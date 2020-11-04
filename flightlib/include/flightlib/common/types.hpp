@@ -6,6 +6,7 @@
 // #include <stdint.h>
 // #include <cinttypes>
 // #include <ze/common/transformation.hpp>
+#define ImageFloatType float
 
 
 namespace flightlib {
@@ -14,6 +15,7 @@ namespace flightlib {
 
 // Define the scalar type used.
 using Scalar = float;  // numpy float32
+
 
 // Define frame id for unity
 using FrameID = uint64_t;
@@ -101,6 +103,6 @@ struct Event_t {
   int polarity;
   float time;
 };
-
+using EventsVector = std::vector<Event_t>;
 
 }  // namespace flightlib

@@ -6,7 +6,6 @@ find_package(catkin_simple REQUIRED)
 
 find_package(OpenCV REQUIRED)
 
-option(BUILD_SAMPLES "Building the samples" OFF)
 
 catkin_simple()
 
@@ -73,17 +72,35 @@ zmqpp
 # racing
 
 
-    cs_add_executable(racing
-        src/racing.cpp
-    )
-
-    target_link_libraries(racing
+cs_add_executable(racing
+    src/racing.cpp)
+target_link_libraries(racing
     ${catkin_LIBRARIES}
     ${OpenCV_LIBRARIES}
     stdc++fs
     zmq
     zmqpp
-    )
+)
+
+
+cs_add_executable(testing
+src/test/testing.cpp)
+
+target_link_libraries(testing
+    ${catkin_LIBRARIES}
+    ${OpenCV_LIBRARIES}
+    stdc++fs
+    zmq
+    zmqpp
+)
+# cs_add_executable(event_test
+# src/test/event_test.cpp)
+
+# target_link_libraries(event_test
+#     ${catkin_LIBRARIES}
+#     ${OpenCV_LIBRARIES}
+#     stdc++fs
+# )
 
 
 
