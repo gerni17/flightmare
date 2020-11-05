@@ -6,6 +6,9 @@
 #include <ros/ros.h>
 #include <sensor_msgs/Image.h>
 
+#include <opencv2/highgui/highgui.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
+
 // standard libraries
 #include <assert.h>
 
@@ -59,6 +62,7 @@ class manual_timer {
 // void setupQuad();
 bool setUnity(const bool render);
 bool connectUnity(void);
+std::string type2str(int type);
 
 
 // publisher
