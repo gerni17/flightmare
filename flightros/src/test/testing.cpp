@@ -88,8 +88,8 @@ int main(int argc, char* argv[]) {
   testing::event_camera_->setRelPose(B_r_BC, R_BC);
   testing::quad_ptr_->addEventCamera(testing::event_camera_);
 
-  double cp = 0.01;
-  double cm = 0.01;
+  double cp = 0.1;
+  double cm = 0.1;
 
 
   // // initialization
@@ -115,6 +115,7 @@ int main(int argc, char* argv[]) {
   // ROS
   testing::rgb_pub_ = my_image_transport.advertise("camera/rgb", 1);
   testing::diff_pub_ = my_image_transport.advertise("camera/diff", 1);
+  testing::event_pub_ = my_image_transport.advertise("camera/event", 1);
 
   // Set unity bridge
   testing::setUnity(testing::unity_render_);
@@ -152,7 +153,7 @@ int main(int argc, char* argv[]) {
   testing::manual_timer timer;
   timer.start();
   bool is_first_image = true;
-  Image I, L, L_reconstructed, L_last;
+  Image I, L, L_reconstructed, L_last,L_second;
   int64_t stamp;
   // reconstructed_image.convertTo(reconstructed_image, CV_64FC1);
 
@@ -186,9 +187,9 @@ int main(int argc, char* argv[]) {
     testing::event_camera_->getRGBImage(new_image);
 
     cv::Mat ev_img = testing::event_camera_->createEventimages();
-    // sensor_msgs::ImagePtr diff_msg =
-    //   cv_bridge::CvImage(std_msgs::Header(), "bgr8", ev_img).toImageMsg();
-    // testing::diff_pub_.publish(diff_msg);
+    sensor_msgs::ImagePtr ev_msg =
+      cv_bridge::CvImage(std_msgs::Header(), "bgr8", ev_img).toImageMsg();
+    testing::event_pub_.publish(ev_msg);
     ROS_INFO_STREAM("Type " << testing::type2str(new_image.type()));
 
     cv::cvtColor(new_image, new_image, CV_BGR2GRAY);
@@ -207,33 +208,44 @@ int main(int argc, char* argv[]) {
     Image log_img;
     cv::log(I + 0.0001, log_img);
 
-    cv::log(dummie+0.0001, dummie);
+    cv::log(dummie + 0.0001, dummie);
     L = log_img - dummie;
 
     // cv::log(0.00001 + I, L);
 
     if (is_first_image) {
       // Initialize reconstructed image from the ground truth image
+      L_second = L_last.clone();
       L_reconstructed = L.clone();
       L_last = L.clone();
       is_first_image = false;
     }
     int counter = 0;
+    int counter_ = 0;
     int count = 0;
     for (const Event_t& e : testing::event_camera_->getEvents()) {
       if (e.time != 0) {
-        ImageFloatType pol = e.polarity ? 1. : -1.;
+        int pol;
+        if (e.polarity == 1) {
+          pol = 1;
+          count++;
+        } else if (e.polarity == -1) {
+          pol = -1;
+          counter++;
+        } else
+          counter_++;
+        // ROS_INFO_STREAM("Polarity  " << pol);
         const ImageFloatType C = e.polarity ? cp : cm;
         // ROS_INFO_STREAM(
         //   "Values before: " << L_reconstructed(e.coord_y, e.coord_x));
-        L_reconstructed(e.coord_y, e.coord_x) += pol * C;
+
+        L_reconstructed(e.coord_y, e.coord_x) += pol * 0.1;
         // ROS_INFO_STREAM(
         // "Values after: " << L_reconstructed(e.coord_y, e.coord_x))
-        count++;
       }
-      counter++;
     }
-    ROS_INFO_STREAM("Amount of events  " << count << " of " << counter);
+    ROS_INFO_STREAM("Amount of pos events  " << count << " of neg " << counter
+                                             << " else " << counter_);
     // Here all informations are gathered and we only need to evaluate it
 
     // clculate the total error of the reconsstruction
@@ -272,7 +284,7 @@ int main(int argc, char* argv[]) {
     double minVal, maxVal, minVal_, maxVal_;
     cv::minMaxLoc(error, &minVal, &maxVal);
     cv::minMaxLoc(real_diff, &minVal_, &maxVal_);
-// publish the two iamge
+    // publish the two iamge
     cv::Mat draw;
     error.convertTo(draw, CV_8U, 255.0 / (maxVal - minVal), -minVal);
     ROS_INFO_STREAM("Type " << testing::type2str(error.type()));
@@ -294,6 +306,7 @@ int main(int argc, char* argv[]) {
     testing::diff_pub_.publish(diff_msg);
 
     // reset initial conditions
+    L_second = L_last.clone();
     L_reconstructed = L.clone();
     L_last = L.clone();
   }
