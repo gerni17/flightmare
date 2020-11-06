@@ -152,7 +152,7 @@ int main(int argc, char* argv[]) {
   testing::manual_timer timer;
   timer.start();
   bool is_first_image = true;
-  Image I, L, L_reconstructed,L_last;
+  Image I, L, L_reconstructed, L_last;
   int64_t stamp;
   // reconstructed_image.convertTo(reconstructed_image, CV_64FC1);
 
@@ -186,9 +186,9 @@ int main(int argc, char* argv[]) {
     testing::event_camera_->getRGBImage(new_image);
 
     cv::Mat ev_img = testing::event_camera_->createEventimages();
-    sensor_msgs::ImagePtr diff_msg =
-      cv_bridge::CvImage(std_msgs::Header(), "bgr8", ev_img).toImageMsg();
-    testing::diff_pub_.publish(diff_msg);
+    // sensor_msgs::ImagePtr diff_msg =
+    //   cv_bridge::CvImage(std_msgs::Header(), "bgr8", ev_img).toImageMsg();
+    // testing::diff_pub_.publish(diff_msg);
     ROS_INFO_STREAM("Type " << testing::type2str(new_image.type()));
 
     cv::cvtColor(new_image, new_image, CV_BGR2GRAY);
@@ -202,13 +202,12 @@ int main(int argc, char* argv[]) {
     new_image.convertTo(I, cv::DataType<ImageFloatType>::type);
 
     Image dummie =
-      cv::Mat(I.rows, I.cols, cv::DataType<ImageFloatType>::type, 0.0001);
+      cv::Mat::zeros(I.rows, I.cols, cv::DataType<ImageFloatType>::type);
 
     Image log_img;
     cv::log(I + 0.0001, log_img);
-    // dummie += 0.0001;
 
-    cv::log(dummie, dummie);
+    cv::log(dummie+0.0001, dummie);
     L = log_img - dummie;
 
     // cv::log(0.00001 + I, L);
@@ -216,6 +215,7 @@ int main(int argc, char* argv[]) {
     if (is_first_image) {
       // Initialize reconstructed image from the ground truth image
       L_reconstructed = L.clone();
+      L_last = L.clone();
       is_first_image = false;
     }
     int counter = 0;
@@ -233,8 +233,10 @@ int main(int argc, char* argv[]) {
       }
       counter++;
     }
-
     ROS_INFO_STREAM("Amount of events  " << count << " of " << counter);
+    // Here all informations are gathered and we only need to evaluate it
+
+    // clculate the total error of the reconsstruction
     ImageFloatType total_error = 0;
     for (int y = 0; y < I.rows; ++y) {
       for (int x = 0; x < I.cols; ++x) {
@@ -245,18 +247,32 @@ int main(int argc, char* argv[]) {
     }
     ROS_INFO_STREAM("Total error " << total_error);
 
-    Image error;
+    // calculate total difference of two consecutive images
+
+    total_error = 0;
+    for (int y = 0; y < I.rows; ++y) {
+      for (int x = 0; x < I.cols; ++x) {
+        total_error += std::fabs(L_last(y, x) - L(y, x));
+      }
+    }
+    ROS_INFO_STREAM("Total diference between two images " << total_error);
+
+    // clculate std deviation and mean of the error
+    Image error, real_diff;
     cv::absdiff(L, L_reconstructed, error);
+    cv::absdiff(L, L_last, real_diff);
+
     cv::Scalar mean_error, stddev_error, mean, stddevv;
     cv::meanStdDev(L, mean, stddevv);
     cv::meanStdDev(error, mean_error, stddev_error);
     ROS_INFO_STREAM("Mean of img: " << mean << ", Stddev: " << stddevv);
     ROS_INFO_STREAM("Mean error: " << mean_error
                                    << ", Stddev: " << stddev_error);
-    // cv::Mat disp = 255.0 * (L_reconstructed - vmin) / (vmax - vmin);
     ROS_INFO_STREAM("Type " << testing::type2str(error.type()));
-    double minVal, maxVal;
+    double minVal, maxVal, minVal_, maxVal_;
     cv::minMaxLoc(error, &minVal, &maxVal);
+    cv::minMaxLoc(real_diff, &minVal_, &maxVal_);
+// publish the two iamge
     cv::Mat draw;
     error.convertTo(draw, CV_8U, 255.0 / (maxVal - minVal), -minVal);
     ROS_INFO_STREAM("Type " << testing::type2str(error.type()));
@@ -264,9 +280,22 @@ int main(int argc, char* argv[]) {
     sensor_msgs::ImagePtr rgb_msg =
       cv_bridge::CvImage(std_msgs::Header(), "mono8", draw).toImageMsg();
     testing::rgb_pub_.publish(rgb_msg);
-    ROS_INFO_STREAM("Amount of events  " << count << " of " << counter);
 
+    cv::Mat draw_;
+    real_diff.convertTo(draw_, CV_8U, 255.0 / (maxVal_ - minVal_), -minVal_);
+    ROS_INFO_STREAM("The biggest val of last " << maxVal_ << " and "
+                                               << minVal_);
+    ROS_INFO_STREAM("The biggest val of reconstructed " << maxVal << " and "
+                                                        << minVal);
+
+
+    sensor_msgs::ImagePtr diff_msg =
+      cv_bridge::CvImage(std_msgs::Header(), "mono8", draw_).toImageMsg();
+    testing::diff_pub_.publish(diff_msg);
+
+    // reset initial conditions
     L_reconstructed = L.clone();
+    L_last = L.clone();
   }
 
   return 0;
