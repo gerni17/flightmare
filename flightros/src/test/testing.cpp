@@ -153,7 +153,7 @@ int main(int argc, char* argv[]) {
   testing::manual_timer timer;
   timer.start();
   bool is_first_image = true;
-  Image I, L, L_reconstructed, L_last,L_second;
+  Image I, L, L_reconstructed, L_last, L_second;
   int64_t stamp;
   // reconstructed_image.convertTo(reconstructed_image, CV_64FC1);
 
@@ -215,9 +215,10 @@ int main(int argc, char* argv[]) {
 
     if (is_first_image) {
       // Initialize reconstructed image from the ground truth image
-      L_second = L_last.clone();
       L_reconstructed = L.clone();
       L_last = L.clone();
+      L_second = L_last.clone();
+
       is_first_image = false;
     }
     int counter = 0;
@@ -253,7 +254,7 @@ int main(int argc, char* argv[]) {
     for (int y = 0; y < I.rows; ++y) {
       for (int x = 0; x < I.cols; ++x) {
         const ImageFloatType reconstruction_error =
-          std::fabs(L_reconstructed(y, x) - L(y, x));
+          std::fabs(L_reconstructed(y, x) - L_last(y, x));
         total_error += reconstruction_error;
       }
     }
@@ -264,15 +265,17 @@ int main(int argc, char* argv[]) {
     total_error = 0;
     for (int y = 0; y < I.rows; ++y) {
       for (int x = 0; x < I.cols; ++x) {
-        total_error += std::fabs(L_last(y, x) - L(y, x));
+        const ImageFloatType reconstruction_error =
+          std::fabs(L_second(y, x) - L_last(y, x));
+        total_error += reconstruction_error;
       }
     }
     ROS_INFO_STREAM("Total diference between two images " << total_error);
 
     // clculate std deviation and mean of the error
     Image error, real_diff;
-    cv::absdiff(L, L_reconstructed, error);
-    cv::absdiff(L, L_last, real_diff);
+    cv::absdiff(L_last, L_reconstructed, error);
+    cv::absdiff(L_last, L_second, real_diff);
 
     cv::Scalar mean_error, stddev_error, mean, stddevv;
     cv::meanStdDev(L, mean, stddevv);
@@ -307,7 +310,7 @@ int main(int argc, char* argv[]) {
 
     // reset initial conditions
     L_second = L_last.clone();
-    L_reconstructed = L.clone();
+    L_reconstructed = L_last.clone();
     L_last = L.clone();
   }
 
