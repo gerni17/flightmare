@@ -2,6 +2,8 @@
 
 #include <eigen3/Eigen/Eigen>
 #include <memory>
+#include <opencv2/core/core.hpp>
+
 // #include <cstdio>
 // #include <stdint.h>
 // #include <cinttypes>
@@ -104,5 +106,8 @@ struct Event_t {
   float time;
 };
 using EventsVector = std::vector<Event_t>;
+
+using Image = cv::Mat_<ImageFloatType>;
+
 
 }  // namespace flightlib

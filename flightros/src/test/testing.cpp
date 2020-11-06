@@ -88,8 +88,8 @@ int main(int argc, char* argv[]) {
   testing::event_camera_->setRelPose(B_r_BC, R_BC);
   testing::quad_ptr_->addEventCamera(testing::event_camera_);
 
-  double cp = 0.5;
-  double cm = 0.5;
+  double cp = 0.1;
+  double cm = 0.1;
 
 
   // // initialization
@@ -152,9 +152,10 @@ int main(int argc, char* argv[]) {
   testing::manual_timer timer;
   timer.start();
   bool is_first_image = true;
-  cv::Mat new_image;
-  cv::Mat reconstructed_image;
-  reconstructed_image.convertTo(reconstructed_image, CV_64FC1);
+  Image I, L, L_reconstructed;
+  int64_t stamp;
+  int counter =0;
+  // reconstructed_image.convertTo(reconstructed_image, CV_64FC1);
 
   while (ros::ok() && testing::unity_render_ && testing::unity_ready_) {
     timer.stop();
@@ -182,126 +183,63 @@ int main(int argc, char* argv[]) {
 
     // add image to addin events
 
-
+    cv::Mat new_image;
     testing::event_camera_->getRGBImage(new_image);
-
     cv::Mat planes[3];
     split(new_image, planes);
+    I = planes[0];
 
-    // transform to greyscale
-    cv::Mat image_gray;
-    // // // // // cvtColor(new_image, image_gray, CV_BGR2GRAY);
-    cv::Mat log_img;
-    planes[0].convertTo(log_img, CV_64FC1);
-    cv::Mat dummie = cv::Mat::zeros(new_image.rows, new_image.cols, CV_64FC1);
-    ROS_INFO_STREAM("breakpoint");
+    I.convertTo(I, cv::DataType<ImageFloatType>::type);
+
+    Image dummie =
+      cv::Mat::zeros(I.rows, I.cols, cv::DataType<ImageFloatType>::type);
+
+    Image log_img;
+    cv::log(I + 0.0001, log_img);
     dummie += 0.0001;
+
     cv::log(dummie + 0.0001, dummie);
-    ROS_INFO_STREAM("breakpoint_");
+    L = log_img - dummie;
 
-    cv::log(log_img + 0.0001, log_img);
-    ROS_INFO_STREAM("breakpoint");
-    ROS_WARN_STREAM("type new_image: " << testing::type2str(new_image.type())
-                                       << " number of channels "
-                                       << new_image.channels());
-    ROS_WARN_STREAM("type log_img: " << testing::type2str(log_img.type())
-                                     << " number of channels "
-                                     << log_img.channels());
-    ROS_WARN_STREAM("type dummie: " << testing::type2str(dummie.type())
-                                    << " number of channels "
-                                    << dummie.channels());
-    cv::Mat image = log_img - dummie;
-    ROS_WARN_STREAM("type image: " << testing::type2str(image.type())
-                                   << " number of channels "
-                                   << image.channels());
+    // cv::log(0.00001 + I, L);
 
-    // Initialize m
-    double minVal;
-    double maxVal;
-    cv::Point minLoc;
-    cv::Point maxLoc;
-
-    cv::minMaxLoc(image, &minVal, &maxVal, &minLoc, &maxLoc);
-    ROS_INFO_STREAM("max of image:" << maxVal << " " << minVal);
-
-    // notsure that this is needed
-    // image.convertTo(image_gray, CV_8U);
-    // ROS_WARN_STREAM("type image gray: " <<
-    // testing::type2str(image_gray.type())
-    //                                     << " number of channels "
-    //                                     << image_gray.channels());
-    if (is_first_image) {
-      reconstructed_image = image;
-      is_first_image = false;
-      ROS_INFO_STREAM("first image");
+    if (counter<5) {
+      // Initialize reconstructed image from the ground truth image
+      L_reconstructed = L.clone();
+      // is_first_image = false;
+      counter++;
     }
-    cv::Mat last_image = (reconstructed_image);
-    // cvtColor(new_image, cv::COLOR_RGB2GRAY);
-    // reconstruct new image with event
-
-    ROS_WARN_STREAM("reconstructed type: "
-                    << testing::type2str(reconstructed_image.type())
-                    << " number of channels "
-                    << reconstructed_image.channels());
     int count = 0;
     for (const Event_t& e : testing::event_camera_->getEvents()) {
       if (e.time != 0) {
-        int pol;
-        // const double C = e.polarity ? cp : cm;
-        if (e.polarity > 0)
-          pol = 1;
-        else
-          pol = -1;
-        double C;
-        if (e.polarity)
-          C = cp;
-        else
-          C = cm;
-        float u = reconstructed_image.at<float>(e.coord_y, e.coord_x);
-        // reconstructed_image.at<float>(e.coord_y, e.coord_x) += pol * 0.1f;
-        float v = reconstructed_image.at<float>(e.coord_y, e.coord_x);
-        // ROS_INFO_STREAM("changed from: " << u << " to " << v << " at "
-        //                                  << e.coord_x << " and " <<
-        //                                  e.coord_y);
+        ImageFloatType pol = e.polarity ? 1. : -1.;
+        const ImageFloatType C = e.polarity ? cp : cm;
+        // ROS_INFO_STREAM(
+        //   "Values before: " << L_reconstructed(e.coord_y, e.coord_x));
+        L_reconstructed(e.coord_y, e.coord_x) += pol * C;
+        // ROS_INFO_STREAM(
+        // "Values after: " << L_reconstructed(e.coord_y, e.coord_x))
+        count++;
       }
-      count++;
     }
-    double u = reconstructed_image.at<float>(maxLoc);
-    double d = u + 0.1f;
-    reconstructed_image.at<float>(maxLoc) = d;
-    float v = reconstructed_image.at<float>(maxLoc);
-    ROS_INFO_STREAM("changed from: " << maxVal << " to " << v <<"and u "<<u<<
-                    "d is " << d << " at " << maxLoc);
-    ROS_INFO_STREAM("count " << count);
-    double minVal_;
-    double maxVal_;
-    cv::Point minLoc_;
-    cv::Point maxLoc_;
-    cv::Mat events_image;
-    // cv::absdiff(reconstructed_image, last_image, events_image);
-    ROS_WARN_STREAM("event type: " << testing::type2str(events_image.type())
-                                   << " number of channels "
-                                   << events_image.channels());
+    ROS_INFO_STREAM("Count  " << count);
+    ImageFloatType total_error = 0;
+    for (int y = 0; y < I.rows; ++y) {
+      for (int x = 0; x < I.cols; ++x) {
+        const ImageFloatType reconstruction_error =
+          std::fabs(L_reconstructed(y, x) - L(y, x));
+        total_error += reconstruction_error;
+      }
+    }
+    ROS_INFO_STREAM("Total error " << total_error);
 
-    cv::minMaxLoc(reconstructed_image, &minVal_, &maxVal_, &minLoc_, &maxLoc_);
-    ROS_INFO_STREAM("max of event_image: " << maxVal_ << " " << minVal_
-                                           << " and loc " << maxLoc_);
-
-    // sensor_msgs::ImagePtr rgb_msg =
-    //   cv_bridge::CvImage(std_msgs::Header(), "8UC1", reconstructed_image)
-    //     .toImageMsg();
-    // testing::rgb_pub_.publish(rgb_msg);
-    // // chec that the two images are equal
-    // cv::Mat error;
-    // // cv::absdiff(reconstructed_image,image_gray,error);
-
-    // sensor_msgs::ImagePtr diff_msg =
-    //   cv_bridge::CvImage(std_msgs::Header(), "8U_C1", image).toImageMsg();
-
-    // testing::diff_pub_.publish(diff_msg);
-
-    // assign new image to last image for next loop
-    reconstructed_image = image;
+    Image error;
+    cv::absdiff(L, L_reconstructed, error);
+    cv::Scalar mean_error, stddev_error;
+    cv::meanStdDev(error, mean_error, stddev_error);
+    ROS_INFO_STREAM("Mean error: " << mean_error
+                                   << ", Stddev: " << stddev_error);
+    // L_reconstructed=L;
   }
 
   return 0;
