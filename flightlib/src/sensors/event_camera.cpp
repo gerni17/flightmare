@@ -162,7 +162,7 @@ cv::Mat EventCamera::createEventimages() {
 
   int count = 0;
   events = event_queue_for_test;
-  event_queue_for_test.clear();
+  // event_queue_for_test.clear();
   for (auto event : events) {
     if (event.coord_x > wid || event.coord_y > hei) {
       logger_.error("coord out of the image");
