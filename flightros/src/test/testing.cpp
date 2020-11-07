@@ -153,7 +153,7 @@ int main(int argc, char* argv[]) {
   testing::manual_timer timer;
   timer.start();
   bool is_first_image = true;
-  Image I, L, L_reconstructed, L_last, L_second;
+  Image I, L, L_reconstructed, L_last, L_second, L_second_reconstructed;
   int64_t stamp;
   // reconstructed_image.convertTo(reconstructed_image, CV_64FC1);
 
@@ -217,6 +217,7 @@ int main(int argc, char* argv[]) {
       // Initialize reconstructed image from the ground truth image
       L_reconstructed = L.clone();
       L_last = L.clone();
+      L_second_reconstructed = L_last.clone();
       L_second = L_last.clone();
 
       is_first_image = false;
@@ -240,31 +241,52 @@ int main(int argc, char* argv[]) {
         const ImageFloatType C = e.polarity ? cp : cm;
         // ROS_INFO_STREAM(
         //   "Values before: " << L_reconstructed(e.coord_y, e.coord_x));
-
+        L_second_reconstructed(e.coord_y, e.coord_x) += pol * 0.1;
         L_reconstructed(e.coord_y, e.coord_x) += pol * 0.1;
         if (first_check) {
-          ROS_INFO_STREAM(
-            "Time of first event: " << e.time);
+          ROS_INFO_STREAM("Time of first event: " << e.time);
           first_check = false;
         }
         // ROS_INFO_STREAM(
         // "Values after: " << L_reconstructed(e.coord_y, e.coord_x))
       }
     }
+
+
+
     ROS_INFO_STREAM("Amount of pos events  " << count << " of neg " << counter
                                              << " else " << counter_);
-    // Here all informations are gathered and we only need to evaluate it
 
-    // clculate the total error of the reconsstruction
+    // Here all informations are gathered and we only need to evaluate it
     ImageFloatType total_error = 0;
     for (int y = 0; y < I.rows; ++y) {
       for (int x = 0; x < I.cols; ++x) {
         const ImageFloatType reconstruction_error =
-          std::fabs(L_reconstructed(y, x) - L_last(y, x));
+          std::fabs(L_reconstructed(y, x) - L(y, x));
         total_error += reconstruction_error;
       }
     }
     ROS_INFO_STREAM("Total error " << total_error);
+
+    // calculate total difference of two consecutive images
+
+    total_error = 0;
+    for (int y = 0; y < I.rows; ++y) {
+      for (int x = 0; x < I.cols; ++x) {
+        total_error += std::fabs(L_last(y, x) - L(y, x));
+      }
+    }
+    ROS_INFO_STREAM("Total diference between two images " << total_error);
+    // clculate the total error of the reconsstruction
+    total_error = 0;
+    for (int y = 0; y < I.rows; ++y) {
+      for (int x = 0; x < I.cols; ++x) {
+        const ImageFloatType reconstruction_error =
+          std::fabs(L_second_reconstructed(y, x) - L_last(y, x));
+        total_error += reconstruction_error;
+      }
+    }
+    ROS_INFO_STREAM("Total secondlast error " << total_error);
 
     // calculate total difference of two consecutive images
 
@@ -276,7 +298,8 @@ int main(int argc, char* argv[]) {
         total_error += reconstruction_error;
       }
     }
-    ROS_INFO_STREAM("Total diference between two images " << total_error);
+    ROS_INFO_STREAM("Total diference between second two images "
+                    << total_error);
 
     // clculate std deviation and mean of the error
     Image error, real_diff;
@@ -316,7 +339,8 @@ int main(int argc, char* argv[]) {
 
     // reset initial conditions
     L_second = L_last.clone();
-    L_reconstructed = L_last.clone();
+    L_reconstructed = L.clone();
+    L_second_reconstructed = L_last.clone();
     L_last = L.clone();
   }
 
