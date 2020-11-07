@@ -224,6 +224,7 @@ int main(int argc, char* argv[]) {
     int counter = 0;
     int counter_ = 0;
     int count = 0;
+    bool first_check = true;
     for (const Event_t& e : testing::event_camera_->getEvents()) {
       if (e.time != 0) {
         int pol;
@@ -241,6 +242,11 @@ int main(int argc, char* argv[]) {
         //   "Values before: " << L_reconstructed(e.coord_y, e.coord_x));
 
         L_reconstructed(e.coord_y, e.coord_x) += pol * 0.1;
+        if (first_check) {
+          ROS_INFO_STREAM(
+            "Time of first event: " << e.time);
+          first_check = false;
+        }
         // ROS_INFO_STREAM(
         // "Values after: " << L_reconstructed(e.coord_y, e.coord_x))
       }
