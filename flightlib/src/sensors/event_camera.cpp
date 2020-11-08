@@ -21,7 +21,7 @@ bool EventCamera::feedEventQueue(const std::vector<Event_t>& events) {
   // std::vector<Event> e(events.size()) ;
   event_queue_for_img.resize(events.size());
   event_queue_for_img = events;
-  event_queue_for_test=events;
+  event_queue_for_test = events;
   queue_mutex_.unlock();
   std::string amount = std::to_string(event_queue_for_img.size());
   logger_.warn(amount);
@@ -77,6 +77,66 @@ bool EventCamera::setFOV(const Scalar fov) {
   fov_ = fov;
   return true;
 }
+bool EventCamera::setCp(const float cp) {
+  if (cp <= 0.0) {
+    logger_.warn(
+      "The setting value for Eventcamera Cp is not valid, discard the "
+      "setting.");
+    return false;
+  }
+  cp_ = cp;
+  return true;
+}
+bool EventCamera::setCm(const float cm) {
+  if (cm <= 0.0) {
+    logger_.warn(
+      "The setting value for Eventcamera Cm is not valid, discard the "
+      "setting.");
+    return false;
+  }
+  cm_ = cm;
+  return true;
+}
+bool EventCamera::setsigmaCp(const float sigma_cp) {
+  if (sigma_cp <= 0.0) {
+    logger_.warn(
+      "The setting value for Eventcamera sigmaCm is not valid, discard the "
+      "setting.");
+    return false;
+  }
+  sigma_cp_ = sigma_cp;
+  return true;
+}
+bool EventCamera::setsigmaCm(const float sigma_cm) {
+  if (sigma_cm <= 0.0) {
+    logger_.warn(
+      "The setting value for Eventcamera sigmaCm is not valid, discard the "
+      "setting.");
+    return false;
+  }
+  sigma_cm_ = sigma_cm;
+  return true;
+}
+bool EventCamera::setRefractory(const uint64_t refractory_period) {
+  if (refractory_period <= 0) {
+    logger_.warn(
+      "The setting value for Eventcamera refractory period is not valid, discard the "
+      "setting.");
+    return false;
+  }
+  refractory_period_ns_ = refractory_period;
+  return true;
+}
+bool EventCamera::setLogEps(const float log_eps) {
+  if (log_eps <= 0.0) {
+    logger_.warn(
+      "The setting value for Eventcamera log_eps is not valid, discard the "
+      "setting.");
+    return false;
+  }
+  log_eps_ = log_eps;
+  return true;
+}
 
 bool EventCamera::changeTime(float timestep) {
   if (timestep <= 0.0) {
@@ -124,6 +184,15 @@ int EventCamera::getWidth(void) const { return width_; }
 int EventCamera::getHeight(void) const { return height_; }
 
 Scalar EventCamera::getFOV(void) const { return fov_; }
+float EventCamera::getCm(void) const { return cm_; }
+float EventCamera::getCp(void) const { return cp_; }
+
+float EventCamera::getsigmaCm(void) const { return sigma_cm_; }
+float EventCamera::getsigmaCp(void) const { return sigma_cp_; }
+uint64_t EventCamera::getRefractory(void) const {
+  return refractory_period_ns_;
+}
+float EventCamera::getLogEps(void) const { return log_eps_; }
 
 // Scalar EventCamera::getDepthScale(void) const { return depth_scale_; }
 

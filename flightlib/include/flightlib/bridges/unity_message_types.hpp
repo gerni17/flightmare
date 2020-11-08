@@ -54,7 +54,31 @@ struct Camera_t {
                            0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
 };
 
-struct TimeMessage_t{
+struct EventCamera_t {
+  std::string ID;
+  // frame Metadata
+  int channels{3};
+  int width{346};
+  int height{260};
+  Scalar fov{70.0f};
+  Scalar depth_scale{0.20};  // 0.xx corresponds to xx cm resolution
+  // metadata
+  bool is_depth{false};
+  int output_index{0};
+  // eventcamera settings
+  float Cm{0.1};
+  float Cp{0.1};
+  float sigma_Cp{0};
+  float sigma_Cm{0};
+  uint64_t refractory_period_ns{0};
+  float log_eps{0.0001};
+  // Transformation matrix from camera to vehicle body 4 x 4
+  // use 1-D vector for json convention
+  std::vector<Scalar> T_BC{0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+                           0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+};
+
+struct TimeMessage_t {
   float next_timestep;
 };
 
@@ -80,7 +104,7 @@ struct Vehicle_t {
   std::vector<Scalar> size{1.0, 1.0, 1.0};  // scale
   // sensors attached on the vehicle
   std::vector<Camera_t> cameras;
-  std::vector<Camera_t> eventcameras;
+  std::vector<EventCamera_t> eventcameras;
   std::vector<Lidar_t> lidars;
   // collision check
   bool has_collision_check = true;
@@ -149,6 +173,24 @@ inline void to_json(json &j, const Camera_t &o) {
            {"enabledLayers", o.enabled_layers},
            {"depthScale", o.depth_scale},
            {"outputIndex", o.output_index}};
+}
+// EventCamera_t
+inline void to_json(json &j, const EventCamera_t &o) {
+  j = json{{"ID", o.ID},
+           {"channels", o.channels},
+           {"width", o.width},
+           {"height", o.height},
+           {"fov", o.fov},
+           {"T_BC", o.T_BC},
+           {"isDepth", o.is_depth},
+           {"depthScale", o.depth_scale},
+           {"outputIndex", o.output_index},
+           {"Cm", o.Cm},
+           {"Cp", o.Cp},
+           {"sigma_Cp", o.sigma_Cp},
+           {"sigma_Cm", o.sigma_Cm},
+           {"refractory_period_ns", o.refractory_period_ns},
+           {"log_eps", o.log_eps}};
 }
 
 // Lidar

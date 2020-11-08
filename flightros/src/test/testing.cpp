@@ -86,6 +86,13 @@ int main(int argc, char* argv[]) {
   testing::event_camera_->setWidth(346);
   testing::event_camera_->setHeight(260);
   testing::event_camera_->setRelPose(B_r_BC, R_BC);
+  testing::event_camera_->setCp(0.1);
+    testing::event_camera_->setCm(0.1);
+  testing::event_camera_->setsigmaCm(0.0);
+  testing::event_camera_->setsigmaCp(0.0);
+  testing::event_camera_->setRefractory(1);
+  testing::event_camera_->setLogEps(0.0001);
+
   testing::quad_ptr_->addEventCamera(testing::event_camera_);
 
   double cp = 0.1;
@@ -227,6 +234,7 @@ int main(int argc, char* argv[]) {
     int count = 0;
     bool first_check = true;
     for (const Event_t& e : testing::event_camera_->getEvents()) {
+      counter_++;
       if (e.time != 0) {
         int pol;
         if (e.polarity == 1) {
@@ -236,13 +244,14 @@ int main(int argc, char* argv[]) {
           pol = -1;
           counter++;
         } else
-          counter_++;
+          ;
+
         // ROS_INFO_STREAM("Polarity  " << pol);
         const ImageFloatType C = e.polarity ? cp : cm;
         // ROS_INFO_STREAM(
         //   "Values before: " << L_reconstructed(e.coord_y, e.coord_x));
-        L_second_reconstructed(e.coord_y, e.coord_x) += pol * 0.1;
-        L_reconstructed(e.coord_y, e.coord_x) += pol * 0.1;
+        L_second_reconstructed(e.coord_y, e.coord_x) += pol * 0.02;
+        L_reconstructed(e.coord_y, e.coord_x) += pol * 0.02;
         if (first_check) {
           ROS_INFO_STREAM("Time of first event: " << e.time);
           first_check = false;
@@ -251,7 +260,6 @@ int main(int argc, char* argv[]) {
         // "Values after: " << L_reconstructed(e.coord_y, e.coord_x))
       }
     }
-
 
 
     ROS_INFO_STREAM("Amount of pos events  " << count << " of neg " << counter

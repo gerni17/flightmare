@@ -34,7 +34,14 @@ class EventCamera : SensorBase {
   bool setWidth(const int width);
   bool setHeight(const int height);
   bool setFOV(const Scalar fov);
-  bool changeTime(float timestep);
+  bool setCp(const float cp);
+  bool setCm(const float cm);
+  bool setsigmaCp(const float sigma_cp);
+  bool setsigmaCm(const float sigma_cm);
+  bool setRefractory(const uint64_t refractory_period);
+  bool setLogEps(const float log_eps);
+
+   bool changeTime(float timestep);
   double getSimTime();
   // bool setDepthScale(const Scalar depth_scale);
   // bool setPostProcesscing(const std::vector<bool>& enabled_layers);
@@ -50,13 +57,21 @@ class EventCamera : SensorBase {
   int getWidth(void) const;
   int getHeight(void) const;
   Scalar getFOV(void) const;
+  float getCm(void) const;
+  float getCp(void) const;
+  float getsigmaCm(void) const;
+  float getsigmaCp(void) const;
+  uint64_t getRefractory(void) const;
+  float getLogEps(void) const;
+
+
   // Scalar getDepthScale(void) const;
   bool getRGBImage(cv::Mat& rgb_img);
   // bool getDepthMap(cv::Mat& depth_map);
   // bool getSegmentation(cv::Mat& segmentation);
   // bool getOpticalFlow(cv::Mat& opticalflow);
   bool getEventImages(cv::Mat& image_mat);
-  std::vector<Event_t> getEvents(); 
+  std::vector<Event_t> getEvents();
   cv::Mat createEventimages();
   // bool getEvents(std::vector<Event>& events);
 
@@ -74,6 +89,12 @@ class EventCamera : SensorBase {
   int width_;
   int height_;
   Scalar fov_;
+  float cm_;
+  float cp_;
+  float sigma_cp_;
+  float sigma_cm_;
+  uint64_t refractory_period_ns_;
+  float log_eps_;
   // Scalar depth_scale_;
   double sim_time = 0.0;
 

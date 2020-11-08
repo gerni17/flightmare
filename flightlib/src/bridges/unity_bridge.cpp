@@ -209,16 +209,24 @@ bool UnityBridge::addQuadrotor(std::shared_ptr<Quadrotor> quad) {
     quad->getEventCameras();
   for (size_t cam_idx = 0; cam_idx < event_cameras.size(); cam_idx++) {
     std::shared_ptr<EventCamera> cam = event_cameras[cam_idx];
-    Camera_t camera_t;
-    camera_t.ID = vehicle_t.ID + "_event_" + std::to_string(cam_idx);
-    camera_t.T_BC =
+    EventCamera_t eventcamera_t;
+    eventcamera_t.ID = vehicle_t.ID + "_event_" + std::to_string(cam_idx);
+    eventcamera_t.T_BC =
       transformationRos2Unity(event_cameras[cam_idx]->getRelPose());
-    camera_t.width = event_cameras[cam_idx]->getWidth();
-    camera_t.height = event_cameras[cam_idx]->getHeight();
-    camera_t.fov = event_cameras[cam_idx]->getFOV();
-    camera_t.is_depth = false;
-    camera_t.output_index = cam_idx;
-    vehicle_t.eventcameras.push_back(camera_t);
+    eventcamera_t.width = event_cameras[cam_idx]->getWidth();
+    eventcamera_t.height = event_cameras[cam_idx]->getHeight();
+    eventcamera_t.fov = event_cameras[cam_idx]->getFOV();
+    eventcamera_t.is_depth = false;
+    eventcamera_t.output_index = cam_idx;
+    eventcamera_t.Cm = event_cameras[cam_idx]->getCm();
+    eventcamera_t.Cp = event_cameras[cam_idx]->getCp();
+    eventcamera_t.sigma_Cm = event_cameras[cam_idx]->getsigmaCm();
+    eventcamera_t.sigma_Cp = event_cameras[cam_idx]->getsigmaCp();
+    eventcamera_t.refractory_period_ns = event_cameras[cam_idx]->getRefractory();
+    eventcamera_t.log_eps = event_cameras[cam_idx]->getLogEps();
+
+
+    vehicle_t.eventcameras.push_back(eventcamera_t);
 
     // add event_cameras
     event_cameras_.push_back(event_cameras[cam_idx]);
@@ -342,9 +350,8 @@ bool UnityBridge::handleOutput() {
       std::string amount = std::to_string(timestep.next_timestep);
       logger_.info("Next timestep:");
       logger_.info(amount);
-      unity_quadrotors_[idx]
-        ->getEventCameras()[cam.output_index]
-        ->changeTime(timestep.next_timestep);
+      unity_quadrotors_[idx]->getEventCameras()[cam.output_index]->changeTime(
+        timestep.next_timestep);
     }
   }
 
