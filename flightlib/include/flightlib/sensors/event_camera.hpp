@@ -41,18 +41,18 @@ class EventCamera : SensorBase {
   bool setRefractory(const uint64_t refractory_period);
   bool setLogEps(const float log_eps);
 
-   bool changeTime(float timestep);
+  bool changeTime(float timestep);
   double getSimTime();
   // bool setDepthScale(const Scalar depth_scale);
   // bool setPostProcesscing(const std::vector<bool>& enabled_layers);
   bool feedImageQueue(const cv::Mat& image_mat);
   bool feedEventImageQueue(const cv::Mat& image_mat);
   bool feedEventQueue(const std::vector<Event_t>& events);
+  bool deleteEventQueue();
 
-
-  // public get functions
-  // std::vector<bool> getEnabledLayers(void) const;
-  Matrix<4, 4> getRelPose(void) const;
+    // public get functions
+    // std::vector<bool> getEnabledLayers(void) const;
+    Matrix<4, 4> getRelPose(void) const;
   int getChannels(void) const;
   int getWidth(void) const;
   int getHeight(void) const;

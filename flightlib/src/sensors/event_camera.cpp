@@ -211,12 +211,22 @@ std::vector<Event_t> EventCamera::getEvents() {
   if (!event_queue_.empty()) {
     // seems wrong here
     events = event_queue_for_test;
-    event_queue_for_test.clear();
+    // event_queue_for_test.clear();
     return events;
   }
   logger_.error("empty events buffer");
   return events;
 }
+
+bool EventCamera::deleteEventQueue(){
+  if (!event_queue_.empty()) {
+    event_queue_for_test.clear();
+    return true;
+  }
+  logger_.error("already empty event buffer");
+  return false;
+}
+
 
 cv::Mat EventCamera::createEventimages() {
   int wid = getWidth();

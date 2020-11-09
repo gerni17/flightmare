@@ -63,7 +63,7 @@ class manual_timer {
 bool setUnity(const bool render);
 bool connectUnity(void);
 std::string type2str(int type);
-
+void saveToFile(std::vector<Event_t>);
 
 // publisher
 image_transport::Publisher rgb_pub_;
@@ -87,4 +87,5 @@ bool unity_ready_{false};
 bool unity_render_{true};
 RenderMessage_t unity_output_;
 uint16_t receive_id_{0};
+std::ofstream events_text_file_;
 }  // namespace testing
