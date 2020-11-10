@@ -137,8 +137,8 @@ int main(int argc, char* argv[]) {
   testing::setUnity(testing::unity_render_);
 
   // Add gates
-  testing::unity_bridge_ptr_->addStaticObject(gate_1);
-  testing::unity_bridge_ptr_->addStaticObject(gate_2);
+  // testing::unity_bridge_ptr_->addStaticObject(gate_1);
+  // testing::unity_bridge_ptr_->addStaticObject(gate_2);
 
   // connect unity
   testing::connectUnity();
@@ -171,7 +171,7 @@ int main(int argc, char* argv[]) {
   timer.start();
 
   bool is_first_image = true;
-  Image I, L, L_reconstructed, L_last, L_second, L_second_reconstructed;
+  Image I, L, L_reconstructed, L_last;
   // int64_t stamp;
   // reconstructed_image.convertTo(reconstructed_image, CV_64FC1);
   ROS_ERROR_STREAM("Cp value " << cp);
@@ -204,13 +204,15 @@ int main(int argc, char* argv[]) {
 
     cv::Mat new_image;
     testing::event_camera_->getRGBImage(new_image);
-
+    sensor_msgs::ImagePtr diff_msg =
+      cv_bridge::CvImage(std_msgs::Header(), "bgr8", new_image).toImageMsg();
+    testing::diff_pub_.publish(diff_msg);
     // double Val, val;
     // cv::minMaxLoc(new_image, &val, &Val);
     // new_image.convertTo(new_image, CV_8U, 255.0 / (Val - val), -val);
     cv::Mat ev_img = testing::event_camera_->createEventimages();
     sensor_msgs::ImagePtr ev_msg =
-      cv_bridge::CvImage(std_msgs::Header(), "bgr8", new_image).toImageMsg();
+      cv_bridge::CvImage(std_msgs::Header(), "bgr8", ev_img).toImageMsg();
     testing::event_pub_.publish(ev_msg);
     ROS_INFO_STREAM("Type_ " << testing::type2str(new_image.type()));
 
@@ -244,8 +246,6 @@ int main(int argc, char* argv[]) {
       // Initialize reconstructed image from the ground truth image
       L_reconstructed = L.clone();
       L_last = L.clone();
-      L_second_reconstructed = L_last.clone();
-      L_second = L_last.clone();
 
       is_first_image = false;
     }
@@ -273,7 +273,6 @@ int main(int argc, char* argv[]) {
         // const ImageFloatType C = e.polarity ? cp : cm;
         // ROS_INFO_STREAM(
         //   "Values before: " << L_reconstructed(e.coord_y, e.coord_x));
-        L_second_reconstructed(e.coord_y, e.coord_x) += pol * cp;
         L_reconstructed(e.coord_y, e.coord_x) += pol * cp;
         event_image(e.coord_y, e.coord_x) += pol * cp;
 
@@ -312,34 +311,34 @@ int main(int argc, char* argv[]) {
       }
     }
     ROS_INFO_STREAM("Total diference between two images " << total_error);
-    // calculate the total error of the reconsstruction
-    total_error = 0;
-    for (int y = 0; y < I.rows; ++y) {
-      for (int x = 0; x < I.cols; ++x) {
-        const ImageFloatType reconstruction_error =
-          std::fabs(L_second_reconstructed(y, x) - L_last(y, x));
-        total_error += reconstruction_error;
-      }
-    }
-    ROS_INFO_STREAM("Total secondlast error " << total_error);
+    // // calculate the total error of the reconsstruction
+    // total_error = 0;
+    // for (int y = 0; y < I.rows; ++y) {
+    //   for (int x = 0; x < I.cols; ++x) {
+    //     const ImageFloatType reconstruction_error =
+    //       std::fabs(L_second_reconstructed(y, x) - L_last(y, x));
+    //     total_error += reconstruction_error;
+    //   }
+    // }
+    // ROS_INFO_STREAM("Total secondlast error " << total_error);
 
-    // calculate total difference of two consecutive images
+    // // calculate total difference of two consecutive images
 
-    total_error = 0;
-    for (int y = 0; y < I.rows; ++y) {
-      for (int x = 0; x < I.cols; ++x) {
-        const ImageFloatType reconstruction_error =
-          std::fabs(L_second(y, x) - L_last(y, x));
-        total_error += reconstruction_error;
-      }
-    }
-    ROS_INFO_STREAM("Total diference between second two images "
-                    << total_error);
+    // total_error = 0;
+    // for (int y = 0; y < I.rows; ++y) {
+    //   for (int x = 0; x < I.cols; ++x) {
+    //     const ImageFloatType reconstruction_error =
+    //       std::fabs(L_second(y, x) - L_last(y, x));
+    //     total_error += reconstruction_error;
+    //   }
+    // }
+    // ROS_INFO_STREAM("Total diference between second two images "
+                    // << total_error);
 
     // clculate std deviation and mean of the error
     Image error, real_diff;
-    cv::absdiff(L_second_reconstructed, L_last, error);
-    cv::absdiff(L_second, L_last, real_diff);
+    cv::absdiff(L_reconstructed, L, error);
+    cv::absdiff(L, L_last, real_diff);
 
     cv::Scalar mean_error, stddev_error, mean, stddevv;
     cv::meanStdDev(real_diff, mean, stddevv);
@@ -349,7 +348,7 @@ int main(int argc, char* argv[]) {
                                    << ", Stddev: " << stddev_error);
     ROS_INFO_STREAM("Type " << testing::type2str(error.type()));
     double minVal, maxVal, minVal_, maxVal_;
-    cv::minMaxLoc(event_image, &minVal, &maxVal);
+    cv::minMaxLoc(error, &minVal, &maxVal);
     cv::minMaxLoc(real_diff, &minVal_, &maxVal_);
     // publish the two iamge
     cv::Mat draw;
@@ -368,18 +367,34 @@ int main(int argc, char* argv[]) {
                                                         << minVal);
 
 
-    sensor_msgs::ImagePtr diff_msg =
-      cv_bridge::CvImage(std_msgs::Header(), "mono8", draw_).toImageMsg();
-    testing::diff_pub_.publish(diff_msg);
+    // sensor_msgs::ImagePtr diff_msg =
+    //   cv_bridge::CvImage(std_msgs::Header(), "mono8", draw_).toImageMsg();
+    // testing::diff_pub_.publish(diff_msg);
 
     // calc historgram
-
-
+    int histSize = 256;
+    float range[] = {minVal, maxVal+1};
+    const float* histRange = {range};
+    cv::Mat hist;
+    bool uniform = true, accumulate = false;
+    cv::calcHist( &error, 1, 0, cv::Mat(), hist, 1, &histSize, &histRange, uniform, accumulate );
+    int hist_w = 512, hist_h = 400;
+    int bin_w = cvRound((double)hist_w / histSize);
+    cv::Mat histImage(hist_h, hist_w, CV_8UC3, cv::Scalar(0, 0, 0));
+    normalize(hist, hist, 0, histImage.rows, cv::NORM_MINMAX, -1, cv::Mat());
+    for (int i = 1; i < histSize; i++) {
+      cv::line(
+        histImage,
+        cv::Point(bin_w * (i - 1), hist_h - cvRound(hist.at<float>(i - 1))),
+        cv::Point(bin_w * (i), hist_h - cvRound(hist.at<float>(i))),
+        cv::Scalar(255, 0, 0), 2, 8, 0);
+    }
+    // sensor_msgs::ImagePtr diff_msg =
+    //   cv_bridge::CvImage(std_msgs::Header(), "bgr8", histImage).toImageMsg();
+    // testing::diff_pub_.publish(diff_msg);
 
     // reset initial conditions
-    L_second = L_last.clone();
     L_reconstructed = L.clone();
-    L_second_reconstructed = L_last.clone();
     L_last = L.clone();
   }
   testing::events_text_file_.close();
