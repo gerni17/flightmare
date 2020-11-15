@@ -26,5 +26,13 @@
   <depend>eigen_conversions</depend>
   <depend>image_transport</depend>
   <depend>cv_bridge</depend>
+  <depend>ze_common</depend>
+  <depend>ze_matplotlib</depend>
+  <depend>ze_cameras</depend>
+  <depend>rosbag</depend>
+  <depend>dvs_msgs</depend>
+
+
+
 
 </package>

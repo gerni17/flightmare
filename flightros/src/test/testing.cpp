@@ -1,5 +1,8 @@
 #include "flightros/testing.hpp"
 
+// DEFINE_string(path_to_output_bag, "",
+// "Path to which save the output bag file.");
+
 bool testing::setUnity(const bool render) {
   unity_render_ = render;
   if (unity_render_ && unity_bridge_ptr_ == nullptr) {
@@ -59,7 +62,7 @@ void testing::saveToFile(std::vector<Event_t> events) {
   // CHECK_EQ(events.size(), 1);
   for (const Event_t& e : events) {
     // rearrange?
-    if (e.time != 0) {
+    if (e.polarity != 0) {
       testing::events_text_file_ << e.time << " " << e.coord_x << " "
                                  << e.coord_y << " " << e.polarity << std::endl;
     }
@@ -93,17 +96,18 @@ int main(int argc, char* argv[]) {
     false, false, false});  // depth, segmentation, optical flow
   testing::quad_ptr_->addRGBCamera(testing::rgb_camera_);
   testing::event_camera_->setFOV(90);
-  testing::event_camera_->setWidth(346);
-  testing::event_camera_->setHeight(260);
+  testing::event_camera_->setWidth(352);
+  testing::event_camera_->setHeight(264);
   testing::event_camera_->setRelPose(B_r_BC, R_BC);
-  testing::event_camera_->setCp(0.01);
-  testing::event_camera_->setCm(0.01);
+  testing::event_camera_->setCp(0.1);
+  testing::event_camera_->setCm(0.5);
   testing::event_camera_->setsigmaCm(0.0);
   testing::event_camera_->setsigmaCp(0.0);
   testing::event_camera_->setRefractory(1);
   testing::event_camera_->setLogEps(0.0001);
 
   testing::quad_ptr_->addEventCamera(testing::event_camera_);
+
 
   double cp = testing::event_camera_->getCp();
   double cm = testing::event_camera_->getCm();
@@ -132,6 +136,9 @@ int main(int argc, char* argv[]) {
   testing::rgb_pub_ = my_image_transport.advertise("camera/rgb", 1);
   testing::diff_pub_ = my_image_transport.advertise("camera/diff", 1);
   testing::event_pub_ = my_image_transport.advertise("camera/event", 1);
+
+  // RosbagWriter::Ptr rosbag_writer = RosbagWriter::createBagWriterFromGflags(1);
+  testing::writer_ = std::make_shared<RosbagWriter>( testing::path_to_output_bag);
 
   // Set unity bridge
   testing::setUnity(testing::unity_render_);
@@ -173,6 +180,7 @@ int main(int argc, char* argv[]) {
   bool is_first_image = true;
   Image I, L, L_reconstructed, L_last;
   // int64_t stamp;
+  int frame = 0;
   // reconstructed_image.convertTo(reconstructed_image, CV_64FC1);
   ROS_ERROR_STREAM("Cp value " << cp);
 
@@ -204,24 +212,31 @@ int main(int argc, char* argv[]) {
 
     cv::Mat new_image;
     testing::event_camera_->getRGBImage(new_image);
+    ROS_WARN_STREAM("New image val1 " << new_image.at<cv::Vec3b>(100, 100));
     sensor_msgs::ImagePtr diff_msg =
       cv_bridge::CvImage(std_msgs::Header(), "bgr8", new_image).toImageMsg();
     testing::diff_pub_.publish(diff_msg);
     // double Val, val;
     // cv::minMaxLoc(new_image, &val, &Val);
     // new_image.convertTo(new_image, CV_8U, 255.0 / (Val - val), -val);
-    cv::Mat ev_img = testing::event_camera_->createEventimages();
-    sensor_msgs::ImagePtr ev_msg =
-      cv_bridge::CvImage(std_msgs::Header(), "bgr8", ev_img).toImageMsg();
-    testing::event_pub_.publish(ev_msg);
-    ROS_INFO_STREAM("Type_ " << testing::type2str(new_image.type()));
+    // cv::Mat ev_img = testing::event_camera_->createEventimages();
+    // sensor_msgs::ImagePtr ev_msg =
+    //   cv_bridge::CvImage(std_msgs::Header(), "bgr8", ev_img).toImageMsg();
+    // testing::event_pub_.publish(ev_msg);
+    // ROS_INFO_STREAM("Type_ " << testing::type2str(new_image.type()));
 
     cv::Mat try_image, diff;
     cv::Mat planes[3];
     split(new_image, planes);
     try_image = planes[0] * 0.299 + 0.587 * planes[1] + 0.114 * planes[2];
     cv::cvtColor(new_image, new_image, CV_BGR2GRAY);
-    new_image.convertTo(I, cv::DataType<ImageFloatType>::type);
+    ROS_INFO_STREAM("Type_new " << testing::type2str(new_image.type()));
+
+    ROS_WARN_STREAM("New image val2 " << new_image.at<uint>(100, 100));
+
+    new_image.convertTo(I, cv::DataType<ImageFloatType>::type, 1. / 255.);
+    ROS_WARN_STREAM("New image val3 " << I.at<float>(100, 100));
+
     try_image.convertTo(try_image, cv::DataType<ImageFloatType>::type);
 
     cv::absdiff(try_image, I, diff);
@@ -239,6 +254,7 @@ int main(int argc, char* argv[]) {
 
     cv::log(dummie + 0.0001, dummie);
     L = log_img - dummie;
+    // L = I;
 
     // cv::log(0.00001 + I, L);
 
@@ -258,7 +274,7 @@ int main(int argc, char* argv[]) {
 
     for (const Event_t& e : testing::event_camera_->getEvents()) {
       counter_++;
-      if (e.time != 0) {
+      if (e.polarity != 0) {
         int pol;
         if (e.polarity == 1) {
           pol = 1;
@@ -267,13 +283,23 @@ int main(int argc, char* argv[]) {
           pol = -1;
           counter++;
         } else
-          ;
+          pol = 0;
 
         // ROS_INFO_STREAM("Polarity  " << pol);
         // const ImageFloatType C = e.polarity ? cp : cm;
-        // ROS_INFO_STREAM(
-        //   "Values before: " << L_reconstructed(e.coord_y, e.coord_x));
+        // if (frame>6) {
+        //   ROS_INFO_STREAM("Values before: "
+        //                   << L(e.coord_y, e.coord_x) << " and recons "
+        //                   << L_reconstructed(e.coord_y, e.coord_x)
+        //                   << " polarity " << e.polarity << " at " << e.coord_y
+        //                   << "/" << e.coord_x << " at frame " << frame);
+        // }
         L_reconstructed(e.coord_y, e.coord_x) += pol * cp;
+        // if (!first_check) {
+          // ROS_INFO_STREAM(
+          //   "Values after: "<< L_reconstructed(e.coord_y, e.coord_x)<<" at
+          //   "<<e.coord_y<<"/"<<e.coord_x);
+        // }
         event_image(e.coord_y, e.coord_x) += pol * cp;
 
         if (first_check) {
@@ -286,8 +312,10 @@ int main(int argc, char* argv[]) {
     }
 
     ROS_INFO_STREAM("Amount of pos events  " << count << " of neg " << counter
-                                             << " else " << counter_);
+                                             << " of " << counter_);
 
+    testing::writer_->eventsCallback(testing::event_camera_->getEvents());
+    
     testing::saveToFile(testing::event_camera_->getEvents());
     // clear the buffer
     testing::event_camera_->deleteEventQueue();
@@ -333,26 +361,22 @@ int main(int argc, char* argv[]) {
     //   }
     // }
     // ROS_INFO_STREAM("Total diference between second two images "
-                    // << total_error);
+    // << total_error);
 
     // clculate std deviation and mean of the error
     Image error, real_diff;
     cv::absdiff(L_reconstructed, L, error);
     cv::absdiff(L, L_last, real_diff);
 
-    cv::Scalar mean_error, stddev_error, mean, stddevv;
-    cv::meanStdDev(real_diff, mean, stddevv);
-    cv::meanStdDev(error, mean_error, stddev_error);
-    ROS_INFO_STREAM("Mean of real_diff: " << mean << ", Stddev: " << stddevv);
-    ROS_INFO_STREAM("Mean error: " << mean_error
-                                   << ", Stddev: " << stddev_error);
+
     ROS_INFO_STREAM("Type " << testing::type2str(error.type()));
     double minVal, maxVal, minVal_, maxVal_;
-    cv::minMaxLoc(error, &minVal, &maxVal);
-    cv::minMaxLoc(real_diff, &minVal_, &maxVal_);
+    cv::Point max, min, max_, min_;
+    cv::minMaxLoc(error, &minVal, &maxVal, &min, &max);
+    cv::minMaxLoc(real_diff, &minVal_, &maxVal_, &min_, &max_);
     // publish the two iamge
     cv::Mat draw;
-    event_image.convertTo(draw, CV_8U, 255.0 / (maxVal - minVal), -minVal);
+    error.convertTo(draw, CV_8U, 255.0 / (maxVal - minVal), -minVal);
     ROS_INFO_STREAM("Type " << testing::type2str(error.type()));
 
     sensor_msgs::ImagePtr rgb_msg =
@@ -361,41 +385,17 @@ int main(int argc, char* argv[]) {
 
     cv::Mat draw_;
     real_diff.convertTo(draw_, CV_8U, 255.0 / (maxVal_ - minVal_), -minVal_);
-    ROS_INFO_STREAM("The biggest val of last " << maxVal_ << " and "
-                                               << minVal_);
-    ROS_INFO_STREAM("The biggest val of reconstructed " << maxVal << " and "
-                                                        << minVal);
+    ROS_INFO_STREAM("The biggest val of last " << maxVal_ << " and " << minVal_
+                                               << " at " << max_.y << "/"
+                                               << max_.x);
+    ROS_INFO_STREAM("The biggest val of reconstructed "
+                    << maxVal << " and " << minVal << " at " << max.y << "/"
+                    << max.x);
 
 
-    // sensor_msgs::ImagePtr diff_msg =
-    //   cv_bridge::CvImage(std_msgs::Header(), "mono8", draw_).toImageMsg();
-    // testing::diff_pub_.publish(diff_msg);
-
-    // calc historgram
-    int histSize = 256;
-    float range[] = {minVal, maxVal+1};
-    const float* histRange = {range};
-    cv::Mat hist;
-    bool uniform = true, accumulate = false;
-    cv::calcHist( &error, 1, 0, cv::Mat(), hist, 1, &histSize, &histRange, uniform, accumulate );
-    int hist_w = 512, hist_h = 400;
-    int bin_w = cvRound((double)hist_w / histSize);
-    cv::Mat histImage(hist_h, hist_w, CV_8UC3, cv::Scalar(0, 0, 0));
-    normalize(hist, hist, 0, histImage.rows, cv::NORM_MINMAX, -1, cv::Mat());
-    for (int i = 1; i < histSize; i++) {
-      cv::line(
-        histImage,
-        cv::Point(bin_w * (i - 1), hist_h - cvRound(hist.at<float>(i - 1))),
-        cv::Point(bin_w * (i), hist_h - cvRound(hist.at<float>(i))),
-        cv::Scalar(255, 0, 0), 2, 8, 0);
-    }
-    // sensor_msgs::ImagePtr diff_msg =
-    //   cv_bridge::CvImage(std_msgs::Header(), "bgr8", histImage).toImageMsg();
-    // testing::diff_pub_.publish(diff_msg);
-
-    // reset initial conditions
     L_reconstructed = L.clone();
     L_last = L.clone();
+    frame++;
   }
   testing::events_text_file_.close();
   return 0;
