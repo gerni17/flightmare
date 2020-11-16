@@ -351,7 +351,7 @@ bool UnityBridge::handleOutput() {
       logger_.info("Next timestep:");
       logger_.info(amount);
       unity_quadrotors_[idx]->getEventCameras()[cam.output_index]->changeTime(
-        timestep.current_time);
+        timestep.next_timestep);
     }
   }
 

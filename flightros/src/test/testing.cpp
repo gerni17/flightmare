@@ -203,7 +203,7 @@ int main(int argc, char* argv[]) {
     testing::quad_state_.x[QS::ATTZ] = (Scalar)desired_pose.orientation.z();
 
     // std::cout << desired_pose.position;
-
+    ROS_INFO_STREAM("time "<<testing::event_camera_->getSimTime());
 
     testing::quad_ptr_->setState(testing::quad_state_);
 

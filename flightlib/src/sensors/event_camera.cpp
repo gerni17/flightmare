@@ -143,10 +143,10 @@ bool EventCamera::changeTime(int64_t curr_time) {
     logger_.warn("timestep is zeero or invalid");
     return false;
   }
-  sim_time = curr_time;
+  sim_time += curr_time;
   return true;
 }
-double EventCamera::getSimTime() { return sim_time; }
+double EventCamera::getSimTime() { return sim_time/100000.0; }
 
 // bool EventCamera::setDepthScale(const Scalar depth_scale) {
 //   if (depth_scale_ < 0.0 || depth_scale_ > 1.0) {
