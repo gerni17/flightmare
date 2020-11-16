@@ -41,7 +41,7 @@ class EventCamera : SensorBase {
   bool setRefractory(const uint64_t refractory_period);
   bool setLogEps(const float log_eps);
 
-  bool changeTime(float timestep);
+  bool changeTime(int64_t curr_time);
   double getSimTime();
   // bool setDepthScale(const Scalar depth_scale);
   // bool setPostProcesscing(const std::vector<bool>& enabled_layers);
@@ -93,10 +93,10 @@ class EventCamera : SensorBase {
   float cp_;
   float sigma_cp_;
   float sigma_cm_;
-  uint64_t refractory_period_ns_;
+  int64_t refractory_period_ns_;
   float log_eps_;
   // Scalar depth_scale_;
-  double sim_time = 0.0;
+  int64_t sim_time = 0;
 
   // Camera relative
   Vector<3> B_r_BC_;

@@ -103,7 +103,7 @@ struct Event_t {
   int coord_x;
   int coord_y;
   int polarity;
-  float time;
+  int32_t time;
 };
 using EventsVector = std::vector<Event_t>;
 

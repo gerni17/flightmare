@@ -40,7 +40,7 @@ inline ros::Time toRosTime(int64_t t)
 void imageToMsg(const cv::Mat_<ImageFloatType>& image, int64_t t, sensor_msgs::ImagePtr& msg);
 
 
-void eventsToMsg(const EventsVector& events, int width, int height, dvs_msgs::EventArrayPtr& msg);
+void eventsToMsg(const EventsVector& events, int width, int height, dvs_msgs::EventArrayPtr& msg, int64_t start_time);
 
 // sensor_msgs::Imu imuToMsg(const Vector3& acc, const Vector3& gyr, Time t);
 

@@ -137,8 +137,10 @@ int main(int argc, char* argv[]) {
   testing::diff_pub_ = my_image_transport.advertise("camera/diff", 1);
   testing::event_pub_ = my_image_transport.advertise("camera/event", 1);
 
-  // RosbagWriter::Ptr rosbag_writer = RosbagWriter::createBagWriterFromGflags(1);
-  testing::writer_ = std::make_shared<RosbagWriter>( testing::path_to_output_bag);
+  // RosbagWriter::Ptr rosbag_writer =
+  // RosbagWriter::createBagWriterFromGflags(1);
+  testing::writer_ =
+    std::make_shared<RosbagWriter>(testing::path_to_output_bag);
 
   // Set unity bridge
   testing::setUnity(testing::unity_render_);
@@ -213,9 +215,9 @@ int main(int argc, char* argv[]) {
     cv::Mat new_image;
     testing::event_camera_->getRGBImage(new_image);
     ROS_WARN_STREAM("New image val1 " << new_image.at<cv::Vec3b>(100, 100));
-    sensor_msgs::ImagePtr diff_msg =
+    sensor_msgs::ImagePtr rgb_msg =
       cv_bridge::CvImage(std_msgs::Header(), "bgr8", new_image).toImageMsg();
-    testing::diff_pub_.publish(diff_msg);
+    testing::rgb_pub_.publish(rgb_msg);
     // double Val, val;
     // cv::minMaxLoc(new_image, &val, &Val);
     // new_image.convertTo(new_image, CV_8U, 255.0 / (Val - val), -val);
@@ -225,27 +227,15 @@ int main(int argc, char* argv[]) {
     // testing::event_pub_.publish(ev_msg);
     // ROS_INFO_STREAM("Type_ " << testing::type2str(new_image.type()));
 
-    cv::Mat try_image, diff;
-    cv::Mat planes[3];
-    split(new_image, planes);
-    try_image = planes[0] * 0.299 + 0.587 * planes[1] + 0.114 * planes[2];
+
     cv::cvtColor(new_image, new_image, CV_BGR2GRAY);
-    ROS_INFO_STREAM("Type_new " << testing::type2str(new_image.type()));
+    ROS_INFO_STREAM("new image type " << testing::type2str(new_image.type()));
 
     ROS_WARN_STREAM("New image val2 " << new_image.at<uint>(100, 100));
-
     new_image.convertTo(I, cv::DataType<ImageFloatType>::type, 1. / 255.);
     ROS_WARN_STREAM("New image val3 " << I.at<float>(100, 100));
 
-    try_image.convertTo(try_image, cv::DataType<ImageFloatType>::type);
-
-    cv::absdiff(try_image, I, diff);
-    double m, M;
-    cv::minMaxLoc(diff, &m, &M);
-
-    ROS_INFO_STREAM("Minmax  " << m << " and " << M);
-
-
+    // calculate the events to test
     Image dummie =
       cv::Mat::zeros(I.rows, I.cols, cv::DataType<ImageFloatType>::type);
 
@@ -254,21 +244,20 @@ int main(int argc, char* argv[]) {
 
     cv::log(dummie + 0.0001, dummie);
     L = log_img - dummie;
-    // L = I;
 
-    // cv::log(0.00001 + I, L);
 
     if (is_first_image) {
       // Initialize reconstructed image from the ground truth image
       L_reconstructed = L.clone();
       L_last = L.clone();
-
       is_first_image = false;
     }
+
     int counter = 0;
     int counter_ = 0;
     int count = 0;
     bool first_check = true;
+    // create illuminance difference image from events
     Image event_image =
       cv::Mat::zeros(I.rows, I.cols, cv::DataType<ImageFloatType>::type);
 
@@ -291,14 +280,15 @@ int main(int argc, char* argv[]) {
         //   ROS_INFO_STREAM("Values before: "
         //                   << L(e.coord_y, e.coord_x) << " and recons "
         //                   << L_reconstructed(e.coord_y, e.coord_x)
-        //                   << " polarity " << e.polarity << " at " << e.coord_y
+        //                   << " polarity " << e.polarity << " at " <<
+        //                   e.coord_y
         //                   << "/" << e.coord_x << " at frame " << frame);
         // }
         L_reconstructed(e.coord_y, e.coord_x) += pol * cp;
         // if (!first_check) {
-          // ROS_INFO_STREAM(
-          //   "Values after: "<< L_reconstructed(e.coord_y, e.coord_x)<<" at
-          //   "<<e.coord_y<<"/"<<e.coord_x);
+        // ROS_INFO_STREAM(
+        //   "Values after: "<< L_reconstructed(e.coord_y, e.coord_x)<<" at
+        //   "<<e.coord_y<<"/"<<e.coord_x);
         // }
         event_image(e.coord_y, e.coord_x) += pol * cp;
 
@@ -314,9 +304,11 @@ int main(int argc, char* argv[]) {
     ROS_INFO_STREAM("Amount of pos events  " << count << " of neg " << counter
                                              << " of " << counter_);
 
-    testing::writer_->eventsCallback(testing::event_camera_->getEvents());
-    
-    testing::saveToFile(testing::event_camera_->getEvents());
+    // const EventsVector& events =testing::event_camera_->getEvents();
+    //  testing::writer_->eventsCallback(events);
+        ROS_INFO_STREAM("should work ");
+
+    // testing::saveToFile(testing::event_camera_->getEvents());
     // clear the buffer
     testing::event_camera_->deleteEventQueue();
     // Here all informations are gathered and we only need to evaluate it
@@ -339,29 +331,7 @@ int main(int argc, char* argv[]) {
       }
     }
     ROS_INFO_STREAM("Total diference between two images " << total_error);
-    // // calculate the total error of the reconsstruction
-    // total_error = 0;
-    // for (int y = 0; y < I.rows; ++y) {
-    //   for (int x = 0; x < I.cols; ++x) {
-    //     const ImageFloatType reconstruction_error =
-    //       std::fabs(L_second_reconstructed(y, x) - L_last(y, x));
-    //     total_error += reconstruction_error;
-    //   }
-    // }
-    // ROS_INFO_STREAM("Total secondlast error " << total_error);
 
-    // // calculate total difference of two consecutive images
-
-    // total_error = 0;
-    // for (int y = 0; y < I.rows; ++y) {
-    //   for (int x = 0; x < I.cols; ++x) {
-    //     const ImageFloatType reconstruction_error =
-    //       std::fabs(L_second(y, x) - L_last(y, x));
-    //     total_error += reconstruction_error;
-    //   }
-    // }
-    // ROS_INFO_STREAM("Total diference between second two images "
-    // << total_error);
 
     // clculate std deviation and mean of the error
     Image error, real_diff;
@@ -369,7 +339,7 @@ int main(int argc, char* argv[]) {
     cv::absdiff(L, L_last, real_diff);
 
 
-    ROS_INFO_STREAM("Type " << testing::type2str(error.type()));
+    // ROS_INFO_STREAM("Type " << testing::type2str(error.type()));
     double minVal, maxVal, minVal_, maxVal_;
     cv::Point max, min, max_, min_;
     cv::minMaxLoc(error, &minVal, &maxVal, &min, &max);
@@ -379,10 +349,17 @@ int main(int argc, char* argv[]) {
     error.convertTo(draw, CV_8U, 255.0 / (maxVal - minVal), -minVal);
     ROS_INFO_STREAM("Type " << testing::type2str(error.type()));
 
-    sensor_msgs::ImagePtr rgb_msg =
+    sensor_msgs::ImagePtr diff_msg =
       cv_bridge::CvImage(std_msgs::Header(), "mono8", draw).toImageMsg();
-    testing::rgb_pub_.publish(rgb_msg);
+    testing::diff_pub_.publish(diff_msg);
 
+
+    cv::Scalar mean_error, stddev_error, mean, stddevv;
+    cv::meanStdDev(real_diff, mean, stddevv);
+    cv::meanStdDev(error, mean_error, stddev_error);
+    ROS_INFO_STREAM("Mean of real diff: " << mean << ", Stddev: " << stddevv);
+    ROS_INFO_STREAM("Mean error: " << mean_error
+                                   << ", Stddev: " << stddev_error);
     cv::Mat draw_;
     real_diff.convertTo(draw_, CV_8U, 255.0 / (maxVal_ - minVal_), -minVal_);
     ROS_INFO_STREAM("The biggest val of last " << maxVal_ << " and " << minVal_

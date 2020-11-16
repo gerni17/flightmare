@@ -25,9 +25,10 @@ RosbagWriter::RosbagWriter(const std::string& path_to_output_bag)
 {
   // CHECK_GE(num_cameras, 1);
   num_cameras_ = 1;
-  sensor_size_ = cv::Size();
+  sensor_size_ = cv::Size(100,100);
+  // cv::MatSize size()=100;
   // std::string path_to_output_bag= "pat/h";
-
+  starting_time = 1;
   try
   {
     bag_.open(path_to_output_bag, rosbag::bagmode::Write);
@@ -97,17 +98,19 @@ void RosbagWriter::eventsCallback(const EventsVector& events)
 
     if(sensor_size_.width == 0 || sensor_size_.height == 0)
     {
+      ROS_ERROR_STREAM("width to small");
       return;
     }
 
     if(events.empty())
     {
+      ROS_ERROR_STREAM("empty ");
       return;
     }
-
+    ROS_ERROR_STREAM("event callback");
     dvs_msgs::EventArrayPtr msg;
     msg.reset(new dvs_msgs::EventArray);
-    eventsToMsg(events, sensor_size_.width, sensor_size_.height, msg);
+    eventsToMsg(events, sensor_size_.width, sensor_size_.height, msg,starting_time);
 
     bag_.write(getTopicName(topic_name_prefix_, 0, "events"),
                msg->header.stamp, msg);

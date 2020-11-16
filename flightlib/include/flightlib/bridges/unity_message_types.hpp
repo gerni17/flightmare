@@ -79,7 +79,8 @@ struct EventCamera_t {
 };
 
 struct TimeMessage_t {
-  float next_timestep;
+  int64_t current_time;
+  int64_t next_timestep;
 };
 
 struct Lidar_t {
@@ -268,7 +269,8 @@ inline void from_json(const json &j, EventsMessage_t &o) {
 }
 
 inline void from_json(const json &j, TimeMessage_t &o) {
-  o.next_timestep = j.at("next_timestep").get<float>();
+  o.current_time = j.at("current_time").get<int64_t>();
+  o.next_timestep = j.at("next_timestep").get<int64_t>();
 }
 
 inline void to_json(json &j, const PointCloudMessage_t &o) {
