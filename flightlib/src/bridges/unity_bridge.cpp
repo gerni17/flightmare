@@ -222,7 +222,8 @@ bool UnityBridge::addQuadrotor(std::shared_ptr<Quadrotor> quad) {
     eventcamera_t.Cp = event_cameras[cam_idx]->getCp();
     eventcamera_t.sigma_Cm = event_cameras[cam_idx]->getsigmaCm();
     eventcamera_t.sigma_Cp = event_cameras[cam_idx]->getsigmaCp();
-    eventcamera_t.refractory_period_ns = event_cameras[cam_idx]->getRefractory();
+    eventcamera_t.refractory_period_ns =
+      event_cameras[cam_idx]->getRefractory();
     eventcamera_t.log_eps = event_cameras[cam_idx]->getLogEps();
 
 
@@ -331,9 +332,8 @@ bool UnityBridge::handleOutput() {
       if (cam.channels == 3) {
         cv::cvtColor(new_image, new_image, CV_RGB2BGR);
       }
-      unity_quadrotors_[idx]
-        ->getEventCameras()[cam.output_index]
-        ->feedImageQueue(new_image);
+
+
       // store events
       std::string json_msg = msg.get(image_i);
       image_i = image_i + 1;
@@ -347,6 +347,11 @@ bool UnityBridge::handleOutput() {
       std::string time_msg = msg.get(image_i);
       image_i = image_i + 1;
       TimeMessage_t timestep = json::parse(time_msg).get<TimeMessage_t>();
+      if (true) {//timestep.rgb_frame
+        unity_quadrotors_[idx]
+          ->getEventCameras()[cam.output_index]
+          ->feedImageQueue(new_image);
+      }
       std::string amount = std::to_string(timestep.next_timestep);
       logger_.info("Next timestep:");
       logger_.info(amount);
@@ -354,7 +359,7 @@ bool UnityBridge::handleOutput() {
         timestep.next_timestep);
     }
   }
-
+  logger_.info("done");
   return true;
 }  // namespace flightlib
 

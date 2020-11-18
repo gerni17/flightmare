@@ -120,7 +120,8 @@ bool EventCamera::setsigmaCm(const float sigma_cm) {
 bool EventCamera::setRefractory(const uint64_t refractory_period) {
   if (refractory_period <= 0) {
     logger_.warn(
-      "The setting value for Eventcamera refractory period is not valid, discard the "
+      "The setting value for Eventcamera refractory period is not valid, "
+      "discard the "
       "setting.");
     return false;
   }
@@ -139,14 +140,16 @@ bool EventCamera::setLogEps(const float log_eps) {
 }
 
 bool EventCamera::changeTime(int64_t curr_time) {
-  if (curr_time <= 0.0) {
+  if (curr_time <= 0) {
     logger_.warn("timestep is zeero or invalid");
     return false;
   }
+  logger_.info("doing");
   sim_time += curr_time;
+  logger_.info("doingg:");
   return true;
 }
-double EventCamera::getSimTime() { return sim_time/100000.0; }
+double EventCamera::getSimTime() { return sim_time / 100000.0; }
 
 // bool EventCamera::setDepthScale(const Scalar depth_scale) {
 //   if (depth_scale_ < 0.0 || depth_scale_ > 1.0) {
@@ -218,7 +221,7 @@ std::vector<Event_t> EventCamera::getEvents() {
   return events;
 }
 
-bool EventCamera::deleteEventQueue(){
+bool EventCamera::deleteEventQueue() {
   if (!event_queue_.empty()) {
     event_queue_for_test.clear();
     return true;

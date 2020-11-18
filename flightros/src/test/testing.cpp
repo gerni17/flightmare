@@ -304,8 +304,8 @@ int main(int argc, char* argv[]) {
     ROS_INFO_STREAM("Amount of pos events  " << count << " of neg " << counter
                                              << " of " << counter_);
 
-    // const EventsVector& events =testing::event_camera_->getEvents();
-    //  testing::writer_->eventsCallback(events);
+    const EventsVector& events =testing::event_camera_->getEvents();
+     testing::writer_->eventsCallback(events);
         ROS_INFO_STREAM("should work ");
 
     // testing::saveToFile(testing::event_camera_->getEvents());
