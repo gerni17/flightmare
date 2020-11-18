@@ -98,16 +98,16 @@ void RosbagWriter::eventsCallback(const EventsVector& events)
 
     if(sensor_size_.width == 0 || sensor_size_.height == 0)
     {
-      ROS_ERROR_STREAM("width to small");
+      ROS_WARN_STREAM("width to small");
       return;
     }
 
     if(events.empty())
     {
-      ROS_ERROR_STREAM("empty ");
+      ROS_WARN_STREAM("empty ");
       return;
     }
-    ROS_ERROR_STREAM("event callback");
+    ROS_INFO_STREAM("event callback");
     dvs_msgs::EventArrayPtr msg;
     msg.reset(new dvs_msgs::EventArray);
     eventsToMsg(events, sensor_size_.width, sensor_size_.height, msg,starting_time);

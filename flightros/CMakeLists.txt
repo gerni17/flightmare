@@ -91,20 +91,6 @@ zmqpp
 
 
 
-# racing
-
-
-cs_add_executable(racing
-    src/racing.cpp)
-target_link_libraries(racing
-    ${catkin_LIBRARIES}
-    ${OpenCV_LIBRARIES}
-    stdc++fs
-    zmq
-    zmqpp
-)
-
-
 cs_add_executable(testing
 src/test/testing.cpp)
 
@@ -117,14 +103,19 @@ target_link_libraries(testing
     zmq
     zmqpp
 )
-# cs_add_executable(event_test
-# src/test/event_test.cpp)
 
-# target_link_libraries(event_test
-#     ${catkin_LIBRARIES}
-#     ${OpenCV_LIBRARIES}
-#     stdc++fs
-# )
+cs_add_executable(record
+src/record.cpp)
+
+target_link_libraries(record
+    ${catkin_LIBRARIES}
+    ${OpenCV_LIBRARIES}
+    stdc++fs
+    rosbag_writer
+    ros_utils
+    zmq
+    zmqpp
+)
 
 
 

@@ -255,6 +255,11 @@ bool UnityBridge::addStaticObject(std::shared_ptr<StaticObject> static_object) {
 }
 
 bool UnityBridge::handleOutput() {
+  bool always = false;
+  handleOutput(always);
+}
+
+bool UnityBridge::handleOutput(bool always) {
   // create new message object
   zmqpp::message msg;
 
@@ -347,7 +352,8 @@ bool UnityBridge::handleOutput() {
       std::string time_msg = msg.get(image_i);
       image_i = image_i + 1;
       TimeMessage_t timestep = json::parse(time_msg).get<TimeMessage_t>();
-      if (true) {//timestep.rgb_frame
+      // bool always = true;
+      if (always || timestep.rgb_frame) {  // timestep.rgb_frame
         unity_quadrotors_[idx]
           ->getEventCameras()[cam.output_index]
           ->feedImageQueue(new_image);
@@ -359,7 +365,6 @@ bool UnityBridge::handleOutput() {
         timestep.next_timestep);
     }
   }
-  logger_.info("done");
   return true;
 }  // namespace flightlib
 

@@ -141,12 +141,10 @@ bool EventCamera::setLogEps(const float log_eps) {
 
 bool EventCamera::changeTime(int64_t curr_time) {
   if (curr_time <= 0) {
-    logger_.warn("timestep is zeero or invalid");
+    logger_.warn("timestep is zero or invalid");
     return false;
   }
-  logger_.info("doing");
   sim_time += curr_time;
-  logger_.info("doingg:");
   return true;
 }
 double EventCamera::getSimTime() { return sim_time / 100000.0; }

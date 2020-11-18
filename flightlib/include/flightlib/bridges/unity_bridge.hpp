@@ -27,8 +27,8 @@
 #include "flightlib/objects/quadrotor.hpp"
 #include "flightlib/objects/static_object.hpp"
 #include "flightlib/objects/unity_camera.hpp"
-#include "flightlib/sensors/rgb_camera.hpp"
 #include "flightlib/sensors/event_camera.hpp"
+#include "flightlib/sensors/rgb_camera.hpp"
 
 
 using json = nlohmann::json;
@@ -49,6 +49,7 @@ class UnityBridge {
   bool getRender(const FrameID frame_id);
   bool trigggerEvents(const FrameID frame_id);
   bool handleOutput();
+  bool handleOutput(bool always);
   bool getPointCloud(PointCloudMessage_t &pointcloud_msg,
                      Scalar time_out = 600.0);
 
