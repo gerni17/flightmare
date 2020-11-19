@@ -108,7 +108,7 @@ int main(int argc, char* argv[]) {
 
   testing::quad_ptr_->addEventCamera(testing::event_camera_);
 
-
+  testing::scene_id_ = 4;
   double cp = testing::event_camera_->getCp();
   double cm = testing::event_camera_->getCm();
 
@@ -137,8 +137,8 @@ int main(int argc, char* argv[]) {
   testing::diff_pub_ = my_image_transport.advertise("camera/diff", 1);
   testing::event_pub_ = my_image_transport.advertise("camera/event", 1);
 
-  testing::writer_ =
-    std::make_shared<RosbagWriter>(testing::path_to_output_bag);
+  testing::writer_ = std::make_shared<RosbagWriter>(
+    testing::path_to_output_bag, testing::event_camera_->getMicroSimTime());
 
   // Set unity bridge
   testing::setUnity(testing::unity_render_);
@@ -188,7 +188,7 @@ int main(int argc, char* argv[]) {
 
     quadrotor_common::TrajectoryPoint desired_pose =
       polynomial_trajectories::getPointFromTrajectory(
-        trajectory, ros::Duration(testing::event_camera_->getSimTime()));
+        trajectory, ros::Duration(testing::event_camera_->getSecSimTime()));
 
     testing::quad_state_.x[QS::POSX] = (Scalar)desired_pose.position.x();
     testing::quad_state_.x[QS::POSY] = (Scalar)desired_pose.position.y();
@@ -199,7 +199,7 @@ int main(int argc, char* argv[]) {
     testing::quad_state_.x[QS::ATTZ] = (Scalar)desired_pose.orientation.z();
 
 
-    ROS_INFO_STREAM("time " << testing::event_camera_->getSimTime());
+    ROS_INFO_STREAM("time " << testing::event_camera_->getSecSimTime());
 
     testing::quad_ptr_->setState(testing::quad_state_);
 
@@ -329,7 +329,7 @@ int main(int argc, char* argv[]) {
         }
       }
     }
-    float number =static_cast<float>(264*352);
+    float number = static_cast<float>(264 * 352);
     true_mean = true_mean / (number);
     true_error_mean = true_error_mean / (number);
     ROS_INFO_STREAM("Total diference between two images " << total_error);

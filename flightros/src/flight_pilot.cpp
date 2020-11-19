@@ -200,7 +200,7 @@ void FlightPilot::mainLoopCallback(const ros::TimerEvent &event) {
     timer.stop();
     quadrotor_common::TrajectoryPoint desired_pose =
       polynomial_trajectories::getPointFromTrajectory(
-        *trajectory_ptr, ros::Duration(event_camera_->getSimTime()));
+        *trajectory_ptr, ros::Duration(event_camera_->getSecSimTime()));
 
     quad_state_.x[QS::POSX] = (Scalar)desired_pose.position.x();
     quad_state_.x[QS::POSY] = (Scalar)desired_pose.position.y();
@@ -213,7 +213,7 @@ void FlightPilot::mainLoopCallback(const ros::TimerEvent &event) {
     std::cout << desired_pose.position << std::endl;
 
     std::cout << "Timer" << ros::Duration(timer.get() / 1000)<< std::endl;
-    std::cout << "simtime" << ros::Duration(event_camera_->getSimTime()) << std::endl;
+    std::cout << "simtime" << ros::Duration(event_camera_->getSecSimTime()) << std::endl;
     quad_ptr_->setState(quad_state_);
 
 

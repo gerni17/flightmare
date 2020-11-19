@@ -31,6 +31,9 @@
   <depend>ze_cameras</depend>
   <depend>rosbag</depend>
   <depend>dvs_msgs</depend>
+  <depend>minkindr_conversions</depend>
+  <depend>minkindr</depend>
+
 
 
 

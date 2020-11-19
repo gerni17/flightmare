@@ -82,6 +82,7 @@ int main(int argc, char* argv[]) {
   record::rgb_camera_ = std::make_unique<RGBCamera>();
   record::event_camera_ = std::make_unique<EventCamera>();
 
+  record::scene_id_ = 4;
 
   // Flightmare
   Vector<3> B_r_BC(0.0, 0.0, 0.3);
@@ -105,7 +106,7 @@ int main(int argc, char* argv[]) {
   record::event_camera_->setRefractory(1);
   record::event_camera_->setLogEps(0.0001);
 
-  record::quad_ptr_->addEventCamera(record::event_camera_);
+  // record::quad_ptr_->addEventCamera(record::event_camera_);
 
 
   double cp = record::event_camera_->getCp();
@@ -179,7 +180,7 @@ int main(int argc, char* argv[]) {
 
     quadrotor_common::TrajectoryPoint desired_pose =
       polynomial_trajectories::getPointFromTrajectory(
-        trajectory, ros::Duration(record::event_camera_->getSimTime()));
+        trajectory, ros::Duration(record::event_camera_->getSecSimTime()));
 
     record::quad_state_.x[QS::POSX] = (Scalar)desired_pose.position.x();
     record::quad_state_.x[QS::POSY] = (Scalar)desired_pose.position.y();
@@ -190,7 +191,7 @@ int main(int argc, char* argv[]) {
     record::quad_state_.x[QS::ATTZ] = (Scalar)desired_pose.orientation.z();
 
 
-    ROS_INFO_STREAM("time " << record::event_camera_->getSimTime());
+    ROS_INFO_STREAM("time " << record::event_camera_->getSecSimTime());
 
     record::quad_ptr_->setState(record::quad_state_);
 
@@ -200,8 +201,8 @@ int main(int argc, char* argv[]) {
     // add image to addin events
 
 
-    const EventsVector& events = record::event_camera_->getEvents();
-    record::writer_->eventsCallback(events);
+    // const EventsVector& events = record::event_camera_->getEvents();
+    // record::writer_->eventsCallback(events);
 
     // clear the buffer
     record::event_camera_->deleteEventQueue();

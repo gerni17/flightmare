@@ -6,6 +6,15 @@
 #include <rosbag/bag.h>
 
 #include <flightros/ros_utils.hpp>
+// #include <esim/common/utils.hpp>
+#include <ze/common/time_conversions.hpp>
+#include <ze/common/transformation.hpp>
+// #include <esim/visualization/ros_utils.hpp>
+// #include <minkindr_conversions/kindr_msg.h>
+// #include <minkindr_conversions/kindr_tf.h>
+#include <gflags/gflags.h>
+#include <glog/logging.h>
+#include <tf/tfMessage.h>
 
 
 namespace flightros {
@@ -13,17 +22,23 @@ namespace flightros {
 class RosbagWriter {
  public:
   RosbagWriter(const std::string& path_to_output_bag);
+  RosbagWriter(const std::string& path_to_output_bag, int64_t stime);
+
   ~RosbagWriter();
 
   // virtual void imageCallback(const ImagePtrVector& images, int64_t t)
   // override;
   void eventsCallback(const EventsVector& events);
-  // virtual void poseCallback(const Transformation& T_W_B, const
-  // TransformationVector& T_W_Cs, int64_t t) override; virtual void
-  // twistCallback(const AngularVelocityVector& ws, const LinearVelocityVector&
-  // vs, int64_t t) override; virtual void imuCallback(const Vector3& acc, const
-  // Vector3& gyr, int64_t t) override; virtual void cameraInfoCallback(const
-  // ze::CameraRig::Ptr& camera_rig, int64_t t) override;
+  void poseCallback(const ze::Transformation& T_W_C, int64_t t);
+  void poseCallback(const flightlib::Quaternion& T_W_C, int64_t t);
+
+  // virtual void twistCallback(const AngularVelocityVector& ws,
+  //                            const LinearVelocityVector& vs,
+  //                            int64_t t) override;
+  // virtual void imuCallback(const Vector3& acc, const Vector3& gyr,
+  //                          int64_t t) override;
+  // virtual void cameraInfoCallback(const ze::CameraRig::Ptr& camera_rig,
+  //                                 int64_t t) override;
 
 
   // static RosbagWriter::Ptr createBagWriterFromGflags(size_t num_cameras);

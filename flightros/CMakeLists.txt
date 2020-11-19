@@ -59,6 +59,7 @@ src/rosbag_writer.cpp
 # target_link_libraries(rosbag_writer
 # ${catkin_LIBRARIES}
 # ${OpenCV_LIBRARIES}
+# minkindr_conversions
 # stdc++fs
 # )
 
@@ -102,6 +103,7 @@ target_link_libraries(testing
     ros_utils
     zmq
     zmqpp
+
 )
 
 cs_add_executable(record

@@ -3,7 +3,9 @@
 namespace flightlib {
 
 EventCamera::EventCamera()
-  : channels_(3), width_(720), height_(480), fov_{70.0} {}
+  : channels_(3), width_(720), height_(480), fov_{70.0} {
+      auto time = std::chrono::high_resolution_clock::now();
+  }
 
 EventCamera::~EventCamera() {}
 
@@ -147,7 +149,8 @@ bool EventCamera::changeTime(int64_t curr_time) {
   sim_time += curr_time;
   return true;
 }
-double EventCamera::getSimTime() { return sim_time / 100000.0; }
+double EventCamera::getSecSimTime() { return sim_time / 1000000.0; }
+double EventCamera::getMicroSimTime() { return sim_time; }
 
 // bool EventCamera::setDepthScale(const Scalar depth_scale) {
 //   if (depth_scale_ < 0.0 || depth_scale_ > 1.0) {

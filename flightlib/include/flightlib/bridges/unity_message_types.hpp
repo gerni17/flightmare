@@ -26,7 +26,8 @@ enum UnityScene {
   TUNELS = 2,
   NATUREFOREST = 3,
   // total number of environment
-  SceneNum = 4
+  JAPAN = 4,
+  SceneNum = 5
 };
 
 
@@ -273,7 +274,6 @@ inline void from_json(const json &j, TimeMessage_t &o) {
   o.current_time = j.at("current_time").get<int64_t>();
   o.next_timestep = j.at("next_timestep").get<int64_t>();
   o.rgb_frame = j.at("rgb_frame").get<bool>();
-
 }
 
 inline void to_json(json &j, const PointCloudMessage_t &o) {

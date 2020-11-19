@@ -345,6 +345,11 @@ bool UnityBridge::handleOutput(bool always) {
 
       EventsMessage_t events_ = json::parse(json_msg).get<EventsMessage_t>();
 
+      std::sort(events_.events.begin(), events_.events.end(),
+                [](const Event_t& a, const Event_t& b) -> bool {
+                  return a.time < b.time;
+                });
+                
       unity_quadrotors_[idx]
         ->getEventCameras()[cam.output_index]
         ->feedEventQueue(events_.events);

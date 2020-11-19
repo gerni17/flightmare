@@ -2,6 +2,7 @@
 
 #include <yaml-cpp/yaml.h>
 
+#include <chrono>
 #include <deque>
 #include <functional>
 #include <memory>
@@ -42,7 +43,9 @@ class EventCamera : SensorBase {
   bool setLogEps(const float log_eps);
 
   bool changeTime(int64_t curr_time);
-  double getSimTime();
+  double getSecSimTime();
+  double getMicroSimTime();
+
   // bool setDepthScale(const Scalar depth_scale);
   // bool setPostProcesscing(const std::vector<bool>& enabled_layers);
   bool feedImageQueue(const cv::Mat& image_mat);
@@ -50,9 +53,9 @@ class EventCamera : SensorBase {
   bool feedEventQueue(const std::vector<Event_t>& events);
   bool deleteEventQueue();
 
-    // public get functions
-    // std::vector<bool> getEnabledLayers(void) const;
-    Matrix<4, 4> getRelPose(void) const;
+  // public get functions
+  // std::vector<bool> getEnabledLayers(void) const;
+  Matrix<4, 4> getRelPose(void) const;
   int getChannels(void) const;
   int getWidth(void) const;
   int getHeight(void) const;
@@ -97,6 +100,8 @@ class EventCamera : SensorBase {
   float log_eps_;
   // Scalar depth_scale_;
   int64_t sim_time = 0;
+  int64_t real_time;
+
 
   // Camera relative
   Vector<3> B_r_BC_;

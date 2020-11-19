@@ -17,7 +17,7 @@ void imageToMsg(const cv::Mat_<ImageFloatType>& image, int64_t t, sensor_msgs::I
 
 
 
-void eventsToMsg(const EventsVector& events, int width, int height, dvs_msgs::EventArrayPtr& msg, int64_t start_time)
+void eventsToMsg(const EventsVector& events, int width, int height, dvs_msgs::EventArrayPtr& msg, int64_t starting_time)
 {
   // CHECK(msg);
   std::vector<dvs_msgs::Event> events_list;
@@ -26,7 +26,7 @@ void eventsToMsg(const EventsVector& events, int width, int height, dvs_msgs::Ev
     dvs_msgs::Event ev;
     ev.x = e.coord_x;
     ev.y = e.coord_y;
-    ev.ts = toRosTime(e.time+start_time);
+    ev.ts = toRosTime((e.time+starting_time)*1000);
     ev.polarity = e.polarity;
 
     events_list.push_back(ev);
