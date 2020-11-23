@@ -108,6 +108,14 @@ struct Event_t {
 using EventsVector = std::vector<Event_t>;
 
 using Image = cv::Mat_<ImageFloatType>;
+using ImagePtr = std::shared_ptr<Image>;
+using ImagePtrVector = std::vector<ImagePtr>;
+
+using RGBImage = cv::Mat;
+using RGBImagePtr = std::shared_ptr<RGBImage>;
+using RGBImagePtrVector = std::vector<RGBImagePtr>;
+
+
 
 
 }  // namespace flightlib

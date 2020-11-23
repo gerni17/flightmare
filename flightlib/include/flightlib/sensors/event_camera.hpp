@@ -41,10 +41,13 @@ class EventCamera : SensorBase {
   bool setsigmaCm(const float sigma_cm);
   bool setRefractory(const uint64_t refractory_period);
   bool setLogEps(const float log_eps);
+  bool setImgStore(const bool img_store);
 
   bool changeTime(int64_t curr_time);
   double getSecSimTime();
-  double getMicroSimTime();
+  int64_t getMicroSimTime();
+  int64_t getMicroTime();
+
 
   // bool setDepthScale(const Scalar depth_scale);
   // bool setPostProcesscing(const std::vector<bool>& enabled_layers);
@@ -66,6 +69,7 @@ class EventCamera : SensorBase {
   float getsigmaCp(void) const;
   uint64_t getRefractory(void) const;
   float getLogEps(void) const;
+  bool getImgStore(void);
 
 
   // Scalar getDepthScale(void) const;
@@ -117,6 +121,7 @@ class EventCamera : SensorBase {
   std::vector<Event_t> event_queue_for_img;
   std::vector<Event_t> event_queue_for_test;
 
+  bool store_image_=false;
 
   // std::deque<cv::Mat> opticalflow_queue_;
   // std::deque<flightlib::Event> event_queue_;

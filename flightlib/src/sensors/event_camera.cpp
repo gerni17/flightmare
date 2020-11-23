@@ -4,8 +4,8 @@ namespace flightlib {
 
 EventCamera::EventCamera()
   : channels_(3), width_(720), height_(480), fov_{70.0} {
-      auto time = std::chrono::high_resolution_clock::now();
-  }
+  auto time = std::chrono::high_resolution_clock::now();
+}
 
 EventCamera::~EventCamera() {}
 
@@ -140,6 +140,10 @@ bool EventCamera::setLogEps(const float log_eps) {
   log_eps_ = log_eps;
   return true;
 }
+bool EventCamera::setImgStore(const bool img_store) {
+  store_image_ = img_store;
+  return true;
+}
 
 bool EventCamera::changeTime(int64_t curr_time) {
   if (curr_time <= 0) {
@@ -150,7 +154,9 @@ bool EventCamera::changeTime(int64_t curr_time) {
   return true;
 }
 double EventCamera::getSecSimTime() { return sim_time / 1000000.0; }
-double EventCamera::getMicroSimTime() { return sim_time; }
+int64_t EventCamera::getMicroSimTime() { return sim_time; }
+int64_t EventCamera::getMicroTime() { return real_time; }
+
 
 // bool EventCamera::setDepthScale(const Scalar depth_scale) {
 //   if (depth_scale_ < 0.0 || depth_scale_ > 1.0) {
@@ -197,6 +203,7 @@ uint64_t EventCamera::getRefractory(void) const {
   return refractory_period_ns_;
 }
 float EventCamera::getLogEps(void) const { return log_eps_; }
+bool EventCamera::getImgStore(void) { return store_image_; }
 
 // Scalar EventCamera::getDepthScale(void) const { return depth_scale_; }
 

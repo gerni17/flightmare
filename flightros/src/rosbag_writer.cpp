@@ -57,17 +57,6 @@ RosbagWriter::RosbagWriter(const std::string& path_to_output_bag,
   last_published_image_time_ = 0;
 }
 
-// Publisher::Ptr RosbagWriter::createBagWriterFromGflags(size_t num_cameras)
-// {
-//   if(FLAGS_path_to_output_bag == "")
-//   {
-//     LOG(INFO) << "Empty output bag string: will not write to rosbag";
-//     return nullptr;
-//   }
-
-//   return std::make_shared<RosbagWriter>(FLAGS_path_to_output_bag,
-//   num_cameras);
-// }
 
 RosbagWriter::~RosbagWriter() {
   LOG(INFO) << "Finalizing the bag...";
@@ -76,31 +65,51 @@ RosbagWriter::~RosbagWriter() {
 }
 
 
-// void RosbagWriter::imageCallback(const ImagePtrVector& images, int64_t t)
-// {
-//   for(size_t i=0; i<num_cameras_; ++i)
-//   {
-//     sensor_sizes_[i] = images[i]->size();
+void RosbagWriter::imageCallback(const ImagePtr& image, int64_t t)
+{
 
-//     static const Duration min_time_interval_between_published_images_
-//         = ze::secToNanosec(1.0 / FLAGS_ros_publisher_frame_rate);
-//     if(last_published_image_time_ > 0 && t - last_published_image_time_ <
-//     min_time_interval_between_published_images_)
-//     {
-//       return;
-//     }
+    sensor_size_ = image->size();
 
-//     if(images[i])
-//     {
-//       sensor_msgs::ImagePtr msg;
-//       imageToMsg(*images[i], t, msg);
-//       bag_.write(getTopicName(topic_name_prefix_, i, "image_raw"),
-//                  msg->header.stamp, msg);
-//     }
-//   }
-//   last_published_image_time_ = t;
-// }
+    // static const Duration min_time_interval_between_published_images_
+    //     = ze::secToNanosec(1.0 / FLAGS_ros_publisher_frame_rate);
+    // if(last_published_image_time_ > 0 && t - last_published_image_time_ <
+    // min_time_interval_between_published_images_)
+    // {
+    //   return;
+    // }
 
+    if(image)
+    {
+      sensor_msgs::ImagePtr msg;
+      imageToMsg(*image, t, msg);
+      bag_.write(getTopicName(topic_name_prefix_, 0, "image_raw"),
+                 msg->header.stamp, msg);
+    }
+  
+  last_published_image_time_ = t;
+}
+void RosbagWriter::imageRGBCallback(const RGBImagePtr& image, int64_t t)
+{
+    sensor_size_ = image->size();
+
+    // static const Duration min_time_interval_between_published_images_
+    //     = ze::secToNanosec(1.0 / FLAGS_ros_publisher_frame_rate);
+    // if(last_published_image_time_ > 0 && t - last_published_image_time_ <
+    // min_time_interval_between_published_images_)
+    // {
+    //   return;
+    // }
+
+    if(image)
+    {
+      sensor_msgs::ImagePtr msg;
+      imageToMsg(*image, t, msg);
+      bag_.write(getTopicName(topic_name_prefix_, 0, "image_rgb"),
+                 msg->header.stamp, msg);
+    }
+  
+  last_published_image_time_ = t;
+}
 
 void RosbagWriter::eventsCallback(const EventsVector& events) {
   if (sensor_size_.width == 0 || sensor_size_.height == 0) {
@@ -122,90 +131,33 @@ void RosbagWriter::eventsCallback(const EventsVector& events) {
              msg);
 }
 
-// void RosbagWriter::poseCallback(const ze::Transformation& T_W_B,
-//                                 const ze::TransformationVector& T_W_Cs,
-//                                 int64_t t) {
-//   if (T_W_Cs.size() != num_cameras_) {
-//     // LOG(WARNING) << "Number of poses is different than number of cameras."
-//     //              << "Will not output poses.";
-//     return;
-//   }
-//   geometry_msgs::PoseStamped pose_stamped_msg;
-//   geometry_msgs::TransformStamped transform_stamped_msg;
-//   transform_stamped_msg.header.frame_id = "map";
-//   transform_stamped_msg.header.stamp = toRosTime(t);
-//   tf::tfMessage tf_msg;
-
-//   for (size_t i = 0; i < num_cameras_; ++i) {
-//     // Write pose to bag
-//     tf::poseStampedKindrToMsg(T_W_Cs[i], toRosTime(t), "map",
-//                               &pose_stamped_msg);
-//     bag_.write(getTopicName(topic_name_prefix_, i, "pose"), toRosTime(t),
-//                pose_stamped_msg);
-
-//     // Write tf transform to bag
-//     std::stringstream ss;
-//     ss << "cam" << i;
-//     transform_stamped_msg.child_frame_id = ss.str();
-//     tf::transformKindrToMsg(T_W_Cs[i], &transform_stamped_msg.transform);
-//     tf_msg.transforms.push_back(transform_stamped_msg);
-//   }
 
 
-//   transform_stamped_msg.child_frame_id = "body";
-//   tf::transformKindrToMsg(T_W_B, &transform_stamped_msg.transform);
-//   tf_msg.transforms.push_back(transform_stamped_msg);
 
-//   bag_.write("/tf", toRosTime(t), tf_msg);
-// }
-
-
-// void RosbagWriter::poseCallback(const ze::Transformation& T_W_C, int64_t t) {
-//   geometry_msgs::PoseStamped pose_stamped_msg;
-//   geometry_msgs::TransformStamped transform_stamped_msg;
-//   transform_stamped_msg.header.frame_id = "map";
-//   transform_stamped_msg.header.stamp = toRosTime(t);
-//   tf::tfMessage tf_msg;
+void RosbagWriter::poseCallback(const ze::Transformation& T_W_C, int64_t t) {
+  geometry_msgs::PoseStamped pose_stamped_msg;
+  geometry_msgs::TransformStamped transform_stamped_msg;
+  transform_stamped_msg.header.frame_id = "map";
+  transform_stamped_msg.header.stamp = toRosTime(t+starting_time);
+  tf::tfMessage tf_msg;
 
 
-//   tf::poseStampedKindrToMsg(T_W_C, toRosTime(t), "map", &pose_stamped_msg);
-//   bag_.write(getTopicName(topic_name_prefix_,0, "pose"), toRosTime(t),
-//              pose_stamped_msg);
+  tf::poseStampedKindrToMsg(T_W_C, toRosTime(t+starting_time), "map", &pose_stamped_msg);
+  bag_.write(getTopicName(topic_name_prefix_,0, "pose"), toRosTime(t+starting_time),
+             pose_stamped_msg);
 
-//   // Write tf transform to bag
-//   std::stringstream ss;
-//   ss << "cam";
-//   transform_stamped_msg.child_frame_id = ss.str();
-//   tf::transformKindrToMsg(T_W_C, &transform_stamped_msg.transform);
-//   tf_msg.transforms.push_back(transform_stamped_msg);
-
-
-//   bag_.write("/tf", toRosTime(t), tf_msg);
-// }
+  // Write tf transform to bag
+  std::stringstream ss;
+  ss << "cam";
+  transform_stamped_msg.child_frame_id = ss.str();
+  tf::transformKindrToMsg(T_W_C, &transform_stamped_msg.transform);
+  tf_msg.transforms.push_back(transform_stamped_msg);
 
 
-// void RosbagWriter::poseCallback(const flightlib::Quaternion& T_W_C, int64_t t) {
-//   geometry_msgs::PoseStamped pose_stamped_msg;
-//   geometry_msgs::TransformStamped transform_stamped_msg;
-//   transform_stamped_msg.header.frame_id = "map";
-//   transform_stamped_msg.header.stamp = toRosTime(t);
-//   tf::tfMessage tf_msg;
+  bag_.write("/tf", toRosTime(t+starting_time), tf_msg);
+}
 
 
-//   tf::poseStampedKindrToMsg(T_W_C, toRosTime(t), "map", &pose_stamped_msg);
-//   bag_.write(getTopicName(topic_name_prefix_,0, "pose"), toRosTime(t),
-//              pose_stamped_msg);
-
-//   // Write tf transform to bag
-//   std::stringstream ss;
-//   ss << "cam";
-//   transform_stamped_msg.child_frame_id = ss.str();
-//   tf::transformKindrToMsg(T_W_C, &transform_stamped_msg.transform);
-//   tf_msg.transforms.push_back(transform_stamped_msg);
-
-
-//   bag_.write("/tf", toRosTime(t), tf_msg);
-// }
 
 // void RosbagWriter::twistCallback(const AngularVelocityVector &ws, const
 // LinearVelocityVector &vs, Time t)

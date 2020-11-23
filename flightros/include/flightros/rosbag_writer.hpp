@@ -10,10 +10,10 @@
 #include <ze/common/time_conversions.hpp>
 #include <ze/common/transformation.hpp>
 // #include <esim/visualization/ros_utils.hpp>
-// #include <minkindr_conversions/kindr_msg.h>
-// #include <minkindr_conversions/kindr_tf.h>
 #include <gflags/gflags.h>
 #include <glog/logging.h>
+#include <minkindr_conversions/kindr_msg.h>
+#include <minkindr_conversions/kindr_tf.h>
 #include <tf/tfMessage.h>
 
 
@@ -26,11 +26,11 @@ class RosbagWriter {
 
   ~RosbagWriter();
 
-  // virtual void imageCallback(const ImagePtrVector& images, int64_t t)
-  // override;
+  void imageCallback(const ImagePtr& images, int64_t t);
+  void imageRGBCallback(const RGBImagePtr& images, int64_t t);
   void eventsCallback(const EventsVector& events);
   void poseCallback(const ze::Transformation& T_W_C, int64_t t);
-  void poseCallback(const flightlib::Quaternion& T_W_C, int64_t t);
+  // void poseCallback(const flightlib::Quaternion& T_W_C, int64_t t);
 
   // virtual void twistCallback(const AngularVelocityVector& ws,
   //                            const LinearVelocityVector& vs,

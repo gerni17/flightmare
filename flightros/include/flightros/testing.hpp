@@ -52,6 +52,7 @@
 #include <ze/common/string_utils.hpp>
 #include <ze/common/test_entrypoint.hpp>
 #include <ze/common/time_conversions.hpp>
+#include <ze/common/transformation.hpp>
 #include <ze/matplotlib/matplotlibcpp.hpp>
 
 using namespace flightlib;

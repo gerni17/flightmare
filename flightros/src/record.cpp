@@ -64,7 +64,7 @@ void record::saveToFile(std::vector<Event_t> events) {
     // rearrange?
     if (e.polarity != 0) {
       record::events_text_file_ << e.time << " " << e.coord_x << " "
-                                 << e.coord_y << " " << e.polarity << std::endl;
+                                << e.coord_y << " " << e.polarity << std::endl;
     }
   }
 }
@@ -89,24 +89,24 @@ int main(int argc, char* argv[]) {
   Matrix<3, 3> R_BC = Quaternion(1.0, 0.0, 0.0, 0.0).toRotationMatrix();
   // std::cout << R_BC << std::endl;
   record::rgb_camera_->setFOV(90);
-  record::rgb_camera_->setWidth(720);
-  record::rgb_camera_->setHeight(480);
+  record::rgb_camera_->setWidth(352);
+  record::rgb_camera_->setHeight(264);
   record::rgb_camera_->setRelPose(B_r_BC, R_BC);
-  record::rgb_camera_->setPostProcesscing(std::vector<bool>{
-    false, false, false});  // depth, segmentation, optical flow
+  record::rgb_camera_->setPostProcesscing(
+    std::vector<bool>{true, false, true});  // depth, segmentation, optical flow
   record::quad_ptr_->addRGBCamera(record::rgb_camera_);
   record::event_camera_->setFOV(90);
   record::event_camera_->setWidth(352);
   record::event_camera_->setHeight(264);
   record::event_camera_->setRelPose(B_r_BC, R_BC);
   record::event_camera_->setCp(0.1);
-  record::event_camera_->setCm(0.5);
+  record::event_camera_->setCm(0.1);
   record::event_camera_->setsigmaCm(0.0);
   record::event_camera_->setsigmaCp(0.0);
   record::event_camera_->setRefractory(1);
   record::event_camera_->setLogEps(0.0001);
 
-  // record::quad_ptr_->addEventCamera(record::event_camera_);
+  record::quad_ptr_->addEventCamera(record::event_camera_);
 
 
   double cp = record::event_camera_->getCp();
@@ -133,8 +133,7 @@ int main(int argc, char* argv[]) {
     Quaternion(std::cos(0.5 * M_PI_2), 0.0, 0.0, std::sin(0.5 * M_PI_2)));
 
 
-  record::writer_ =
-    std::make_shared<RosbagWriter>(record::path_to_output_bag);
+  record::writer_ = std::make_shared<RosbagWriter>(record::path_to_output_bag);
 
   // Set unity bridge
   record::setUnity(record::unity_render_);
@@ -168,16 +167,14 @@ int main(int argc, char* argv[]) {
       generateMinimumSnapRingTrajectory(segment_times, trajectory_settings,
                                         20.0, 20.0, 6.0);
 
-  // record::events_text_file_.open("/home/gian/Desktop/events");
+  record::events_text_file_.open("/home/gian/Desktop/events");
   // Start record
 
-
-
+  cv::Mat new_image, sec_image;
+  Image I;
   ROS_INFO_STREAM("Cp value " << cp);
 
   while (ros::ok() && record::unity_render_ && record::unity_ready_) {
-
-
     quadrotor_common::TrajectoryPoint desired_pose =
       polynomial_trajectories::getPointFromTrajectory(
         trajectory, ros::Duration(record::event_camera_->getSecSimTime()));
@@ -190,6 +187,16 @@ int main(int argc, char* argv[]) {
     record::quad_state_.x[QS::ATTY] = (Scalar)desired_pose.orientation.y();
     record::quad_state_.x[QS::ATTZ] = (Scalar)desired_pose.orientation.z();
 
+    ze::Transformation twc;
+    record::quad_state_.qx.normalize();
+    twc.getRotation() = ze::Quaternion(
+      record::quad_state_.x[QS::ATTW], record::quad_state_.x[QS::ATTX],
+      record::quad_state_.x[QS::ATTY], record::quad_state_.x[QS::ATTZ]);
+
+    twc.getPosition() = ze::Position((Scalar)desired_pose.position.x(),
+                                     (Scalar)desired_pose.position.y(),
+                                     (Scalar)desired_pose.position.z());
+    record::writer_->poseCallback(twc, record::event_camera_->getSecSimTime());
 
     ROS_INFO_STREAM("time " << record::event_camera_->getSecSimTime());
 
@@ -198,15 +205,34 @@ int main(int argc, char* argv[]) {
     record::unity_bridge_ptr_->getRender(0);
     record::unity_bridge_ptr_->handleOutput();
 
+
+    record::event_camera_->getRGBImage(new_image);
+
+    cv::cvtColor(new_image, sec_image, CV_BGR2GRAY);
+
+    sec_image.convertTo(I, cv::DataType<ImageFloatType>::type, 1. / 255.);
+
+    auto img_ptr = std::make_shared<Image>(I);
+    auto rgb_img_ptr = std::make_shared<RGBImage>(new_image);
+
+
     // add image to addin events
+    if (record::event_camera_->getImgStore()) {
+      record::writer_->imageCallback(img_ptr,
+                                     record::event_camera_->getSecSimTime()+1);
+      // record::writer_->imageRGBCallback(rgb_img_ptr,
+      //                                record::event_camera_->getSecSimTime()+1);
 
+      ROS_INFO_STREAM("image");
+    }
 
-    // const EventsVector& events = record::event_camera_->getEvents();
-    // record::writer_->eventsCallback(events);
+    const EventsVector& events = record::event_camera_->getEvents();
+    record::writer_->eventsCallback(events);
+
 
     // clear the buffer
     record::event_camera_->deleteEventQueue();
   }
-  // record::events_text_file_.close();
+  record::events_text_file_.close();
   return 0;
 }

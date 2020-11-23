@@ -40,7 +40,7 @@ add_compile_options(-O3)
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS} ${CMAKE_CXX_ARCH_FLAGS} -Wall -DNDEBUG -fPIC")
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS} -Wall -g")
 
-
+include_directories(include)
 
 cs_add_library(ros_utils
     src/ros_utils.cpp
@@ -58,9 +58,9 @@ src/rosbag_writer.cpp
 
 # target_link_libraries(rosbag_writer
 # ${catkin_LIBRARIES}
-# ${OpenCV_LIBRARIES}
+# # ${OpenCV_LIBRARIES}
 # minkindr_conversions
-# stdc++fs
+# # stdc++fs
 # )
 
 #pilot
