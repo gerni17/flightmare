@@ -84,7 +84,7 @@ int main(int argc, char* argv[]) {
   testing::rgb_camera_ = std::make_unique<RGBCamera>();
   testing::event_camera_ = std::make_unique<EventCamera>();
 
-  testing::scene_id_ = 4;
+  // testing::scene_id_ = 4;
   // Flightmare
   Vector<3> B_r_BC(0.0, 0.0, 0.3);
   Matrix<3, 3> R_BC = Quaternion(1.0, 0.0, 0.0, 0.0).toRotationMatrix();
@@ -229,8 +229,9 @@ int main(int argc, char* argv[]) {
     cv::Mat new_image;
     testing::event_camera_->getRGBImage(new_image);
     // ROS_INFO_STREAM("New image val1 " << new_image.at<cv::Vec3b>(100, 100));
+        cv::cvtColor(new_image, new_image, CV_BGR2GRAY);
     sensor_msgs::ImagePtr rgb_msg =
-      cv_bridge::CvImage(std_msgs::Header(), "bgr8", new_image).toImageMsg();
+      cv_bridge::CvImage(std_msgs::Header(), "mono8", new_image).toImageMsg();
     testing::rgb_pub_.publish(rgb_msg);
 
     cv::Mat ev_img = testing::event_camera_->createEventimages();
@@ -240,7 +241,7 @@ int main(int argc, char* argv[]) {
     // ROS_INFO_STREAM("Type_ " << testing::type2str(new_image.type()));
 
 
-    cv::cvtColor(new_image, new_image, CV_BGR2GRAY);
+
     ROS_INFO_STREAM("new image type " << testing::type2str(new_image.type()));
 
     // ROS_WARN_STREAM("New image val2 " << new_image.at<uint>(100, 100));

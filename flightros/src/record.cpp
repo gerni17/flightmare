@@ -89,8 +89,8 @@ int main(int argc, char* argv[]) {
   Matrix<3, 3> R_BC = Quaternion(1.0, 0.0, 0.0, 0.0).toRotationMatrix();
   // std::cout << R_BC << std::endl;
   record::rgb_camera_->setFOV(90);
-  record::rgb_camera_->setWidth(352);
-  record::rgb_camera_->setHeight(264);
+  record::rgb_camera_->setWidth(1024);
+  record::rgb_camera_->setHeight(768);
   record::rgb_camera_->setRelPose(B_r_BC, R_BC);
   record::rgb_camera_->setPostProcesscing(
     std::vector<bool>{true, false, true});  // depth, segmentation, optical flow
@@ -106,7 +106,7 @@ int main(int argc, char* argv[]) {
   record::event_camera_->setRefractory(1);
   record::event_camera_->setLogEps(0.0001);
 
-  record::quad_ptr_->addEventCamera(record::event_camera_);
+  // record::quad_ptr_->addEventCamera(record::event_camera_);
 
 
   double cp = record::event_camera_->getCp();
@@ -206,32 +206,32 @@ int main(int argc, char* argv[]) {
     record::unity_bridge_ptr_->handleOutput();
 
 
-    record::event_camera_->getRGBImage(new_image);
+    // // record::event_camera_->getRGBImage(new_image);
 
-    cv::cvtColor(new_image, sec_image, CV_BGR2GRAY);
+    // cv::cvtColor(new_image, sec_image, CV_BGR2GRAY);
 
-    sec_image.convertTo(I, cv::DataType<ImageFloatType>::type, 1. / 255.);
+    // sec_image.convertTo(I, cv::DataType<ImageFloatType>::type, 1. / 255.);
 
-    auto img_ptr = std::make_shared<Image>(I);
-    auto rgb_img_ptr = std::make_shared<RGBImage>(new_image);
-
-
-    // add image to addin events
-    if (record::event_camera_->getImgStore()) {
-      record::writer_->imageCallback(img_ptr,
-                                     record::event_camera_->getSecSimTime()+1);
-      // record::writer_->imageRGBCallback(rgb_img_ptr,
-      //                                record::event_camera_->getSecSimTime()+1);
-
-      ROS_INFO_STREAM("image");
-    }
-
-    const EventsVector& events = record::event_camera_->getEvents();
-    record::writer_->eventsCallback(events);
+    // auto img_ptr = std::make_shared<Image>(I);
+    // auto rgb_img_ptr = std::make_shared<RGBImage>(new_image);
 
 
-    // clear the buffer
-    record::event_camera_->deleteEventQueue();
+    // // add image to addin events
+    // if (record::event_camera_->getImgStore()) {
+    //   // record::writer_->imageCallback(img_ptr,
+    //   //                                record::event_camera_->getSecSimTime()+1);
+    //   // record::writer_->imageRGBCallback(rgb_img_ptr,
+    //   //                                record::event_camera_->getSecSimTime()+1);
+
+    //   ROS_INFO_STREAM("image");
+    // }
+
+    // // const EventsVector& events = record::event_camera_->getEvents();
+    // // record::writer_->eventsCallback(events);
+
+
+    // // clear the buffer
+    // // record::event_camera_->deleteEventQueue();
   }
   record::events_text_file_.close();
   return 0;
