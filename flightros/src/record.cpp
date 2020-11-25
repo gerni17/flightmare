@@ -82,8 +82,9 @@ int main(int argc, char* argv[]) {
   record::rgb_camera_ = std::make_unique<RGBCamera>();
   record::event_camera_ = std::make_unique<EventCamera>();
 
-  record::scene_id_ = 4;
+  // record::scene_id_ = 4;
 
+  int frame = 0;
   // Flightmare
   Vector<3> B_r_BC(0.0, 0.0, 0.3);
   Matrix<3, 3> R_BC = Quaternion(1.0, 0.0, 0.0, 0.0).toRotationMatrix();
@@ -106,7 +107,7 @@ int main(int argc, char* argv[]) {
   record::event_camera_->setRefractory(1);
   record::event_camera_->setLogEps(0.0001);
 
-  // record::quad_ptr_->addEventCamera(record::event_camera_);
+  record::quad_ptr_->addEventCamera(record::event_camera_);
 
 
   double cp = record::event_camera_->getCp();
@@ -167,10 +168,10 @@ int main(int argc, char* argv[]) {
       generateMinimumSnapRingTrajectory(segment_times, trajectory_settings,
                                         20.0, 20.0, 6.0);
 
-  record::events_text_file_.open("/home/gian/Desktop/events");
+  // record::events_text_file_.open("/home/gian/Desktop/events");
   // Start record
 
-  cv::Mat new_image, sec_image;
+  cv::Mat new_image, of_image, depth_image;
   Image I;
   ROS_INFO_STREAM("Cp value " << cp);
 
@@ -206,32 +207,38 @@ int main(int argc, char* argv[]) {
     record::unity_bridge_ptr_->handleOutput();
 
 
-    // // record::event_camera_->getRGBImage(new_image);
+    // record::event_camera_->getRGBImage(new_image);
+    record::rgb_camera_->getRGBImage(new_image);
+    record::rgb_camera_->getOpticalFlow(of_image);
+    record::rgb_camera_->getDepthMap(depth_image);
 
-    // cv::cvtColor(new_image, sec_image, CV_BGR2GRAY);
+    // cv::cvtColor(new_image, new_image, CV_BGR2GRAY);
 
-    // sec_image.convertTo(I, cv::DataType<ImageFloatType>::type, 1. / 255.);
+    // new_image.convertTo(I, cv::DataType<ImageFloatType>::type, 1. / 255.);
 
     // auto img_ptr = std::make_shared<Image>(I);
-    // auto rgb_img_ptr = std::make_shared<RGBImage>(new_image);
+    RGBImagePtr rgb_img_ptr = std::make_shared<RGBImage>(new_image);
+    RGBImagePtr of_img_ptr = std::make_shared<RGBImage>(of_image);
+    RGBImagePtr depth_img_ptr = std::make_shared<RGBImage>(depth_image);
 
 
-    // // add image to addin events
-    // if (record::event_camera_->getImgStore()) {
-    //   // record::writer_->imageCallback(img_ptr,
-    //   //                                record::event_camera_->getSecSimTime()+1);
-    //   // record::writer_->imageRGBCallback(rgb_img_ptr,
-    //   //                                record::event_camera_->getSecSimTime()+1);
+    if (frame > 6) {
+      // add image to addin events
+      if (record::event_camera_->getImgStore()) {
+        record::writer_->imageRGBCallback(
+          rgb_img_ptr, record::event_camera_->getSecSimTime() + 1);
+        record::writer_->imageOFCallback(
+          of_img_ptr, record::event_camera_->getSecSimTime() + 1);
 
-    //   ROS_INFO_STREAM("image");
-    // }
+        ROS_INFO_STREAM("image");
+      }
 
-    // // const EventsVector& events = record::event_camera_->getEvents();
-    // // record::writer_->eventsCallback(events);
-
-
-    // // clear the buffer
-    // // record::event_camera_->deleteEventQueue();
+      const EventsVector& events = record::event_camera_->getEvents();
+      record::writer_->eventsCallback(events);
+    }
+    // clear the buffer
+    record::event_camera_->deleteEventQueue();
+    frame++;
   }
   record::events_text_file_.close();
   return 0;

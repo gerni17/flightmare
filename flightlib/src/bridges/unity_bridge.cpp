@@ -349,7 +349,8 @@ bool UnityBridge::handleOutput(bool always) {
                 [](const Event_t& a, const Event_t& b) -> bool {
                   return a.time < b.time;
                 });
-                
+
+
       unity_quadrotors_[idx]
         ->getEventCameras()[cam.output_index]
         ->feedEventQueue(events_.events);
@@ -358,11 +359,10 @@ bool UnityBridge::handleOutput(bool always) {
       image_i = image_i + 1;
       TimeMessage_t timestep = json::parse(time_msg).get<TimeMessage_t>();
       // bool always = true;
-              unity_quadrotors_[idx]
-          ->getEventCameras()[cam.output_index]
-          ->setImgStore(timestep.rgb_frame);
+      unity_quadrotors_[idx]->getEventCameras()[cam.output_index]->setImgStore(
+        timestep.rgb_frame);
 
-      // if (always || timestep.rgb_frame) 
+      // if (always || timestep.rgb_frame)
       {  // timestep.rgb_frame
         unity_quadrotors_[idx]
           ->getEventCameras()[cam.output_index]

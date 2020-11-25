@@ -4,33 +4,37 @@
 
 namespace flightros {
 
-
-
-void imageToMsg(const cv::Mat_<ImageFloatType>& image, int64_t t, sensor_msgs::ImagePtr& msg)
-{
+void imageToMsg(const cv::Mat_<ImageFloatType>& image, int64_t t,
+                sensor_msgs::ImagePtr& msg) {
   cv_bridge::CvImage cv_image;
   image.convertTo(cv_image.image, CV_8U, 255.0);
   cv_image.encoding = "mono8";
   cv_image.header.stamp = toRosTime(t);
   msg = cv_image.toImageMsg();
 }
+void imageToMsg(const cv::Mat& image, int64_t t, sensor_msgs::ImagePtr& msg) {
+  cv_bridge::CvImage cv_image;
+  image.convertTo(cv_image.image, CV_8UC3, 255.0);
+  cv_image.encoding = "bgr8";
+  cv_image.header.stamp = toRosTime(t);
+  msg = cv_image.toImageMsg();
+}
 
 
-
-void eventsToMsg(const EventsVector& events, int width, int height, dvs_msgs::EventArrayPtr& msg, int64_t starting_time)
-{
+void eventsToMsg(const EventsVector& events, int width, int height,
+                 dvs_msgs::EventArrayPtr& msg, int64_t starting_time) {
   // CHECK(msg);
   std::vector<dvs_msgs::Event> events_list;
-  for(const Event_t& e : events)
-  {
+  for (const Event_t& e : events) {
     dvs_msgs::Event ev;
     ev.x = e.coord_x;
     ev.y = e.coord_y;
-    ev.ts = toRosTime((e.time+starting_time)*1000);
+    ev.ts = toRosTime((e.time + starting_time) * 1000);
     ev.polarity = e.polarity;
 
     events_list.push_back(ev);
   }
+
 
   msg->events = events_list;
   msg->height = height;
@@ -54,7 +58,8 @@ void eventsToMsg(const EventsVector& events, int width, int height, dvs_msgs::Ev
 //   return imu;
 // }
 
-// geometry_msgs::TwistStamped twistToMsg(const AngularVelocity& w, const LinearVelocity& v, Time t)
+// geometry_msgs::TwistStamped twistToMsg(const AngularVelocity& w, const
+// LinearVelocity& v, Time t)
 // {
 //   geometry_msgs::TwistStamped twist;
 //   twist.header.stamp = toRosTime(t);
@@ -70,7 +75,8 @@ void eventsToMsg(const EventsVector& events, int width, int height, dvs_msgs::Ev
 //   return twist;
 // }
 
-// void cameraToMsg(const ze::Camera::Ptr& camera, Time t, sensor_msgs::CameraInfoPtr& msg)
+// void cameraToMsg(const ze::Camera::Ptr& camera, Time t,
+// sensor_msgs::CameraInfoPtr& msg)
 // {
 //   CHECK(msg);
 //   msg->width = camera->width();
@@ -108,7 +114,8 @@ void eventsToMsg(const EventsVector& events, int width, int height, dvs_msgs::Ev
 
 //   for(int j=0; j<camera->distortionParameters().rows(); ++j)
 //   {
-//     D_vec.push_back(static_cast<double>(camera->distortionParameters()(j))); // @TODO: use the distortion params from the camera
+//     D_vec.push_back(static_cast<double>(camera->distortionParameters()(j)));
+//     // @TODO: use the distortion params from the camera
 //   }
 
 //   msg->K = K_vec;
@@ -122,4 +129,4 @@ void eventsToMsg(const EventsVector& events, int width, int height, dvs_msgs::Ev
 // }
 
 
-} // namespace event_camera_simulator
+}  // namespace flightros

@@ -53,7 +53,7 @@ class EventCamera : SensorBase {
   // bool setPostProcesscing(const std::vector<bool>& enabled_layers);
   bool feedImageQueue(const cv::Mat& image_mat);
   bool feedEventImageQueue(const cv::Mat& image_mat);
-  bool feedEventQueue(const std::vector<Event_t>& events);
+  bool feedEventQueue( std::vector<Event_t>& events);
   bool deleteEventQueue();
 
   // public get functions

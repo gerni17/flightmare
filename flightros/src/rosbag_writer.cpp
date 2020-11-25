@@ -99,12 +99,34 @@ void RosbagWriter::imageRGBCallback(const RGBImagePtr& image, int64_t t)
     // {
     //   return;
     // }
+    ROS_INFO_STREAM("writing"<<image);
+    if(image)
+    {
+      sensor_msgs::ImagePtr msg;
+      imageToMsg(*image, t, msg);
+      bag_.write(getTopicName(topic_name_prefix_, 0, "image_raw"),
+                 msg->header.stamp, msg);
+    }
+  
+  last_published_image_time_ = t;
+}
+void RosbagWriter::imageOFCallback(const RGBImagePtr& image, int64_t t)
+{
+    sensor_size_ = image->size();
+
+    // static const Duration min_time_interval_between_published_images_
+    //     = ze::secToNanosec(1.0 / FLAGS_ros_publisher_frame_rate);
+    // if(last_published_image_time_ > 0 && t - last_published_image_time_ <
+    // min_time_interval_between_published_images_)
+    // {
+    //   return;
+    // }
 
     if(image)
     {
       sensor_msgs::ImagePtr msg;
       imageToMsg(*image, t, msg);
-      bag_.write(getTopicName(topic_name_prefix_, 0, "image_rgb"),
+      bag_.write(getTopicName(topic_name_prefix_, 0, "image_of"),
                  msg->header.stamp, msg);
     }
   
@@ -126,6 +148,7 @@ void RosbagWriter::eventsCallback(const EventsVector& events) {
   msg.reset(new dvs_msgs::EventArray);
   eventsToMsg(events, sensor_size_.width, sensor_size_.height, msg,
               starting_time);
+  ROS_INFO_STREAM("event callback");
 
   bag_.write(getTopicName(topic_name_prefix_, 0, "events"), msg->header.stamp,
              msg);
