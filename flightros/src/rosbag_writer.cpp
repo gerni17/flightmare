@@ -81,12 +81,12 @@ void RosbagWriter::imageCallback(const ImagePtr& image, int64_t t)
     if(image)
     {
       sensor_msgs::ImagePtr msg;
-      imageToMsg(*image, t, msg);
+      imageToMsg(*image, t+starting_time, msg);
       bag_.write(getTopicName(topic_name_prefix_, 0, "image_raw"),
                  msg->header.stamp, msg);
     }
   
-  last_published_image_time_ = t;
+  last_published_image_time_ = t+starting_time;
 }
 void RosbagWriter::imageRGBCallback(const RGBImagePtr& image, int64_t t)
 {
@@ -103,12 +103,12 @@ void RosbagWriter::imageRGBCallback(const RGBImagePtr& image, int64_t t)
     if(image)
     {
       sensor_msgs::ImagePtr msg;
-      imageToMsg(*image, t, msg);
+      imageToMsg(*image, t+starting_time, msg);
       bag_.write(getTopicName(topic_name_prefix_, 0, "image_raw"),
                  msg->header.stamp, msg);
     }
   
-  last_published_image_time_ = t;
+  last_published_image_time_ = t+starting_time;
 }
 void RosbagWriter::imageOFCallback(const RGBImagePtr& image, int64_t t)
 {
@@ -125,15 +125,15 @@ void RosbagWriter::imageOFCallback(const RGBImagePtr& image, int64_t t)
     if(image)
     {
       sensor_msgs::ImagePtr msg;
-      imageToMsg(*image, t, msg);
+      imageToMsg(*image, t+starting_time, msg);
       bag_.write(getTopicName(topic_name_prefix_, 0, "image_of"),
                  msg->header.stamp, msg);
     }
   
-  last_published_image_time_ = t;
+  last_published_image_time_ = t+starting_time;
 }
 
-void RosbagWriter::eventsCallback(const EventsVector& events) {
+void RosbagWriter::eventsCallback(const EventsVector& events,int64_t t) {
   if (sensor_size_.width == 0 || sensor_size_.height == 0) {
     ROS_WARN_STREAM("width to small");
     return;

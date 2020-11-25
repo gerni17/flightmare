@@ -318,7 +318,7 @@ int main(int argc, char* argv[]) {
                                              << " of " << counter_);
 
     const EventsVector& events = testing::event_camera_->getEvents();
-    testing::writer_->eventsCallback(events);
+    testing::writer_->eventsCallback(events, testing::event_camera_->getMicroSimTime());
     ROS_INFO_STREAM("should work ");
 
     // testing::saveToFile(testing::event_camera_->getEvents());

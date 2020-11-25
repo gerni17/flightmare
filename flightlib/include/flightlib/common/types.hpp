@@ -105,6 +105,12 @@ struct Event_t {
   int polarity;
   int32_t time;
 };
+
+struct TimeMessage_t {
+  int64_t current_time;
+  int64_t next_timestep;
+  bool rgb_frame;
+};
 using EventsVector = std::vector<Event_t>;
 
 using Image = cv::Mat_<ImageFloatType>;

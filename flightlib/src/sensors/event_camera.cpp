@@ -153,12 +153,13 @@ bool EventCamera::setImgStore(const bool img_store) {
   return true;
 }
 
-bool EventCamera::changeTime(int64_t curr_time) {
-  if (curr_time <= 0) {
+bool EventCamera::changeTime(TimeMessage_t time_msg) {
+  if (time_msg.next_timestep <= 0) {
     logger_.warn("timestep is zero or invalid");
     return false;
   }
-  sim_time += curr_time;
+  sim_time = time_msg.current_time;
+  delta_time=time_msg.next_timestep;
   return true;
 }
 double EventCamera::getSecSimTime() { return sim_time / 1000000.0; }

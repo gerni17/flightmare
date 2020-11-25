@@ -79,11 +79,7 @@ struct EventCamera_t {
                            0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
 };
 
-struct TimeMessage_t {
-  int64_t current_time;
-  int64_t next_timestep;
-  bool rgb_frame;
-};
+
 
 struct Lidar_t {
   std::string ID;

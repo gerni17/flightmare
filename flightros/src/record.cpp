@@ -197,7 +197,7 @@ int main(int argc, char* argv[]) {
     twc.getPosition() = ze::Position((Scalar)desired_pose.position.x(),
                                      (Scalar)desired_pose.position.y(),
                                      (Scalar)desired_pose.position.z());
-    record::writer_->poseCallback(twc, record::event_camera_->getSecSimTime());
+    record::writer_->poseCallback(twc, record::event_camera_->getMicroSimTime());
 
     ROS_INFO_STREAM("time " << record::event_camera_->getSecSimTime());
 
@@ -226,15 +226,15 @@ int main(int argc, char* argv[]) {
       // add image to addin events
       if (record::event_camera_->getImgStore()) {
         record::writer_->imageRGBCallback(
-          rgb_img_ptr, record::event_camera_->getSecSimTime() + 1);
+          rgb_img_ptr, record::event_camera_->getMicroSimTime() );
         record::writer_->imageOFCallback(
-          of_img_ptr, record::event_camera_->getSecSimTime() + 1);
+          of_img_ptr, record::event_camera_->getMicroSimTime() );
 
         ROS_INFO_STREAM("image");
       }
 
       const EventsVector& events = record::event_camera_->getEvents();
-      record::writer_->eventsCallback(events);
+      record::writer_->eventsCallback(events,record::event_camera_->getMicroSimTime());
     }
     // clear the buffer
     record::event_camera_->deleteEventQueue();

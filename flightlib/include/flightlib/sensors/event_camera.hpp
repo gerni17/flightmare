@@ -43,7 +43,7 @@ class EventCamera : SensorBase {
   bool setLogEps(const float log_eps);
   bool setImgStore(const bool img_store);
 
-  bool changeTime(int64_t curr_time);
+  bool changeTime(TimeMessage_t time_msg);
   double getSecSimTime();
   int64_t getMicroSimTime();
   int64_t getMicroTime();
@@ -104,6 +104,7 @@ class EventCamera : SensorBase {
   float log_eps_;
   // Scalar depth_scale_;
   int64_t sim_time = 0;
+  int64_t delta_time =0;
   int64_t real_time;
 
 
