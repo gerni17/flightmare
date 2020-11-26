@@ -143,12 +143,12 @@ void RosbagWriter::eventsCallback(const EventsVector& events,int64_t t) {
     ROS_WARN_STREAM("empty ");
     return;
   }
-  ROS_INFO_STREAM("event callback");
+
   dvs_msgs::EventArrayPtr msg;
   msg.reset(new dvs_msgs::EventArray);
   eventsToMsg(events, sensor_size_.width, sensor_size_.height, msg,
               starting_time);
-  ROS_INFO_STREAM("event callback");
+
 
   bag_.write(getTopicName(topic_name_prefix_, 0, "events"), msg->header.stamp,
              msg);

@@ -112,7 +112,7 @@ int main(int argc, char* argv[]) {
 
   double cp = record::event_camera_->getCp();
   double cm = record::event_camera_->getCm();
-
+  bool record = false;
   // // initialization
   record::quad_state_.setZero();
   record::quad_ptr_->reset(record::quad_state_);
@@ -197,7 +197,8 @@ int main(int argc, char* argv[]) {
     twc.getPosition() = ze::Position((Scalar)desired_pose.position.x(),
                                      (Scalar)desired_pose.position.y(),
                                      (Scalar)desired_pose.position.z());
-    record::writer_->poseCallback(twc, record::event_camera_->getMicroSimTime());
+    record::writer_->poseCallback(twc,
+                                  record::event_camera_->getMicroSimTime());
 
     ROS_INFO_STREAM("time " << record::event_camera_->getSecSimTime());
 
@@ -221,23 +222,30 @@ int main(int argc, char* argv[]) {
     RGBImagePtr of_img_ptr = std::make_shared<RGBImage>(of_image);
     RGBImagePtr depth_img_ptr = std::make_shared<RGBImage>(depth_image);
 
+    if (frame > 10 && record::event_camera_->getImgStore()) {
+      ROS_INFO_STREAM("starting to record");
+      record = true;
+    }
 
-    if (frame > 6) {
+    if (record) {
       // add image to addin events
       if (record::event_camera_->getImgStore()) {
         record::writer_->imageRGBCallback(
-          rgb_img_ptr, record::event_camera_->getMicroSimTime() );
+          rgb_img_ptr, record::event_camera_->getMicroSimTime());
         record::writer_->imageOFCallback(
-          of_img_ptr, record::event_camera_->getMicroSimTime() );
+          of_img_ptr, record::event_camera_->getMicroSimTime());
 
         ROS_INFO_STREAM("image");
       }
 
       const EventsVector& events = record::event_camera_->getEvents();
-      record::writer_->eventsCallback(events,record::event_camera_->getMicroSimTime());
+      record::writer_->eventsCallback(events,
+                                      record::event_camera_->getMicroSimTime());
     }
     // clear the buffer
     record::event_camera_->deleteEventQueue();
+
+
     frame++;
   }
   record::events_text_file_.close();

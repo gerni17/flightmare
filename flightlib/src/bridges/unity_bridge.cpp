@@ -359,6 +359,7 @@ bool UnityBridge::handleOutput(bool always) {
       image_i = image_i + 1;
       TimeMessage_t timestep = json::parse(time_msg).get<TimeMessage_t>();
       // bool always = true;
+
       unity_quadrotors_[idx]->getEventCameras()[cam.output_index]->setImgStore(
         timestep.rgb_frame);
 
