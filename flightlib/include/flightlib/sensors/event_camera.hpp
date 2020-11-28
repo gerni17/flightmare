@@ -47,6 +47,7 @@ class EventCamera : SensorBase {
   double getSecSimTime();
   int64_t getMicroSimTime();
   int64_t getMicroTime();
+  int64_t getNanoSimTime();
 
 
   // bool setDepthScale(const Scalar depth_scale);

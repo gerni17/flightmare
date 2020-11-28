@@ -2,9 +2,9 @@
 
 // ros
 #include <cv_bridge/cv_bridge.h>
-// #include <image_transport/image_transport.h>
+#include <image_transport/image_transport.h>
 #include <ros/ros.h>
-// #include <sensor_msgs/Image.h>
+#include <sensor_msgs/Image.h>
 
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
@@ -69,6 +69,7 @@ void saveToFile(std::vector<Event_t>);
 
 
 // cv::Mat rgb_image;
+image_transport::Publisher rgb_pub_;
 
 
 // unity quadrotor

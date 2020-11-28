@@ -163,6 +163,7 @@ bool EventCamera::changeTime(TimeMessage_t time_msg) {
 }
 double EventCamera::getSecSimTime() { return sim_time / 1000000.0; }
 int64_t EventCamera::getMicroSimTime() { return sim_time; }
+int64_t EventCamera::getNanoSimTime() { return sim_time*1000; }
 int64_t EventCamera::getMicroTime() { return real_time; }
 
 

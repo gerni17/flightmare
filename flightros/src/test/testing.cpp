@@ -90,8 +90,8 @@ int main(int argc, char* argv[]) {
   Matrix<3, 3> R_BC = Quaternion(1.0, 0.0, 0.0, 0.0).toRotationMatrix();
   // std::cout << R_BC << std::endl;
   testing::rgb_camera_->setFOV(90);
-  testing::rgb_camera_->setWidth(720);
-  testing::rgb_camera_->setHeight(480);
+  testing::rgb_camera_->setWidth(352);
+  testing::rgb_camera_->setHeight(264);
   testing::rgb_camera_->setRelPose(B_r_BC, R_BC);
   testing::rgb_camera_->setPostProcesscing(std::vector<bool>{
     false, false, false});  // depth, segmentation, optical flow
@@ -173,7 +173,7 @@ int main(int argc, char* argv[]) {
       generateMinimumSnapRingTrajectory(segment_times, trajectory_settings,
                                         20.0, 20.0, 6.0);
 
-  // testing::events_text_file_.open("/home/gian/Desktop/events");
+  testing::events_text_file_.open("/home/gian/Desktop/events");
   // Start testing
 
 
@@ -202,10 +202,9 @@ int main(int argc, char* argv[]) {
 
     ze::Transformation tcv;
     testing::quad_state_.qx.normalize();
-    tcv.getRotation() = ze::Quaternion(testing::quad_state_.x[QS::ATTW],
-                                       testing::quad_state_.x[QS::ATTX],
-                                       testing::quad_state_.x[QS::ATTY],
-                                       testing::quad_state_.x[QS::ATTZ]);
+    tcv.getRotation() = ze::Quaternion(
+      testing::quad_state_.x[QS::ATTW], testing::quad_state_.x[QS::ATTX],
+      testing::quad_state_.x[QS::ATTY], testing::quad_state_.x[QS::ATTZ]);
     // tcv.getRotation() = ze::Quaternion( testing::quad_ptr_->getQuaternion());
 
     tcv.getPosition() = ze::Position((Scalar)desired_pose.position.x(),
@@ -214,8 +213,8 @@ int main(int argc, char* argv[]) {
     // ze::Position(FLAGS_renderer_plane_x, FLAGS_renderer_plane_y,
     //              FLAGS_renderer_plane_z);
 
-    testing::writer_->poseCallback(tcv,
-                                   testing::event_camera_->getSecSimTime());
+    // testing::writer_->poseCallback(tcv,
+    //                                testing::event_camera_->getSecSimTime());
 
     ROS_INFO_STREAM("time " << testing::event_camera_->getSecSimTime());
 
@@ -228,8 +227,9 @@ int main(int argc, char* argv[]) {
 
     cv::Mat new_image;
     testing::event_camera_->getRGBImage(new_image);
+    // testing::rgb_camera_->getRGBImage(new_image);
     // ROS_INFO_STREAM("New image val1 " << new_image.at<cv::Vec3b>(100, 100));
-        cv::cvtColor(new_image, new_image, CV_BGR2GRAY);
+    cv::cvtColor(new_image, new_image, CV_BGR2GRAY);
     sensor_msgs::ImagePtr rgb_msg =
       cv_bridge::CvImage(std_msgs::Header(), "mono8", new_image).toImageMsg();
     testing::rgb_pub_.publish(rgb_msg);
@@ -239,7 +239,6 @@ int main(int argc, char* argv[]) {
       cv_bridge::CvImage(std_msgs::Header(), "bgr8", ev_img).toImageMsg();
     testing::event_pub_.publish(ev_msg);
     // ROS_INFO_STREAM("Type_ " << testing::type2str(new_image.type()));
-
 
 
     ROS_INFO_STREAM("new image type " << testing::type2str(new_image.type()));
@@ -270,6 +269,7 @@ int main(int argc, char* argv[]) {
     int counter_ = 0;
     int count = 0;
     bool first_check = true;
+
     // create illuminance difference image from events
     Image event_image =
       cv::Mat::zeros(I.rows, I.cols, cv::DataType<ImageFloatType>::type);
@@ -318,10 +318,11 @@ int main(int argc, char* argv[]) {
                                              << " of " << counter_);
 
     const EventsVector& events = testing::event_camera_->getEvents();
-    testing::writer_->eventsCallback(events, testing::event_camera_->getMicroSimTime());
+    // testing::writer_->eventsCallback(events,
+    // testing::event_camera_->getMicroSimTime());
     ROS_INFO_STREAM("should work ");
 
-    // testing::saveToFile(testing::event_camera_->getEvents());
+    testing::saveToFile(testing::event_camera_->getEvents());
     // clear the buffer
     testing::event_camera_->deleteEventQueue();
     // Here all informations are gathered and we only need to evaluate it
@@ -343,7 +344,7 @@ int main(int argc, char* argv[]) {
     for (int y = 0; y < I.rows; ++y) {
       for (int x = 0; x < I.cols; ++x) {
         total_error += std::fabs(L_last(y, x) - L(y, x));
-        if (std::fabs(L_last(y, x) - L(y, x)) > 0) {
+        if (std::fabs(L_last(y, x) - L(y, x)) != 0) {
           true_mean += std::fabs(L_last(y, x) - L(y, x));
           true_error_mean += std::fabs(L_reconstructed(y, x) - L(y, x));
           count_for_mean++;
@@ -400,7 +401,7 @@ int main(int argc, char* argv[]) {
     }
 
 
-    if (frame < 10 || frame % 50 == 0) L_reconstructed = L.clone();
+    if (frame < 10 || frame % 1 == 0) L_reconstructed = L.clone();
 
     L_last = L.clone();
 
@@ -420,6 +421,6 @@ int main(int argc, char* argv[]) {
   ze::plt::grid(true);
   // ze::plt::save("~/Desktop/evolution_reconstruction_error.pdf");
   ze::plt::show();
-  // testing::events_text_file_.close();
+  testing::events_text_file_.close();
   return 0;
 }

@@ -74,6 +74,8 @@ int main(int argc, char* argv[]) {
   ros::init(argc, argv, "flightmare_gates");
   ros::NodeHandle nh("");
   ros::NodeHandle pnh("~");
+    image_transport::ImageTransport my_image_transport(nh);
+
   ros::Rate(50.0);
 
   // quad initialization
@@ -83,6 +85,8 @@ int main(int argc, char* argv[]) {
   record::event_camera_ = std::make_unique<EventCamera>();
 
   // record::scene_id_ = 4;
+  record::rgb_pub_ = my_image_transport.advertise("camera/rgb", 1);
+
 
   int frame = 0;
   // Flightmare
@@ -90,8 +94,8 @@ int main(int argc, char* argv[]) {
   Matrix<3, 3> R_BC = Quaternion(1.0, 0.0, 0.0, 0.0).toRotationMatrix();
   // std::cout << R_BC << std::endl;
   record::rgb_camera_->setFOV(90);
-  record::rgb_camera_->setWidth(1024);
-  record::rgb_camera_->setHeight(768);
+  record::rgb_camera_->setWidth(352);
+  record::rgb_camera_->setHeight(264);
   record::rgb_camera_->setRelPose(B_r_BC, R_BC);
   record::rgb_camera_->setPostProcesscing(
     std::vector<bool>{true, false, true});  // depth, segmentation, optical flow
@@ -198,7 +202,7 @@ int main(int argc, char* argv[]) {
                                      (Scalar)desired_pose.position.y(),
                                      (Scalar)desired_pose.position.z());
     record::writer_->poseCallback(twc,
-                                  record::event_camera_->getMicroSimTime());
+                                  record::event_camera_->getNanoSimTime());
 
     ROS_INFO_STREAM("time " << record::event_camera_->getSecSimTime());
 
@@ -212,6 +216,10 @@ int main(int argc, char* argv[]) {
     record::rgb_camera_->getRGBImage(new_image);
     record::rgb_camera_->getOpticalFlow(of_image);
     record::rgb_camera_->getDepthMap(depth_image);
+
+        sensor_msgs::ImagePtr rgb_msg =
+      cv_bridge::CvImage(std_msgs::Header(), "bgr8",new_image).toImageMsg();
+    record::rgb_pub_.publish(rgb_msg);
 
     // cv::cvtColor(new_image, new_image, CV_BGR2GRAY);
 
@@ -231,16 +239,16 @@ int main(int argc, char* argv[]) {
       // add image to addin events
       if (record::event_camera_->getImgStore()) {
         record::writer_->imageRGBCallback(
-          rgb_img_ptr, record::event_camera_->getMicroSimTime());
+          rgb_img_ptr, record::event_camera_->getNanoSimTime());
         record::writer_->imageOFCallback(
-          of_img_ptr, record::event_camera_->getMicroSimTime());
+          of_img_ptr, record::event_camera_->getNanoSimTime());
 
         ROS_INFO_STREAM("image");
       }
 
       const EventsVector& events = record::event_camera_->getEvents();
       record::writer_->eventsCallback(events,
-                                      record::event_camera_->getMicroSimTime());
+                                      record::event_camera_->getNanoSimTime());
     }
     // clear the buffer
     record::event_camera_->deleteEventQueue();
