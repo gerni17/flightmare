@@ -33,8 +33,9 @@ void eventsToMsg(const EventsVector& events, int width, int height,
     ev.y = e.coord_y;
     ev.ts = toRosTime((e.time*1000 + starting_time) );
     ev.polarity = e.polarity;
-
+    if(e.time>0){
     events_list.push_back(ev);
+    }
   }
 
 

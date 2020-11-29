@@ -134,7 +134,8 @@ int main(int argc, char* argv[]) {
     Quaternion(std::cos(0.5 * M_PI_2), 0.0, 0.0, std::sin(0.5 * M_PI_2)));
 
   // ROS
-  testing::rgb_pub_ = my_image_transport.advertise("camera/rgb", 1);
+  testing::rgb_pub_ = my_image_transport.advertise("camera/antialiasing_rgb", 1);
+  testing::rgb_rgb_pub_ = my_image_transport.advertise("camera/rgb", 1);
   testing::diff_pub_ = my_image_transport.advertise("camera/diff", 1);
   testing::event_pub_ = my_image_transport.advertise("camera/event", 1);
 
@@ -183,14 +184,15 @@ int main(int argc, char* argv[]) {
   int frame = 0;
   // reconstructed_image.convertTo(reconstructed_image, CV_64FC1);
   ROS_INFO_STREAM("Cp value " << cp);
-
+  float time__ = 0;
   while (ros::ok() && testing::unity_render_ && testing::unity_ready_ &&
          frame < 200) {
     // timer.stop();
 
     quadrotor_common::TrajectoryPoint desired_pose =
-      polynomial_trajectories::getPointFromTrajectory(
-        trajectory, ros::Duration(testing::event_camera_->getSecSimTime()));
+      polynomial_trajectories::getPointFromTrajectory(trajectory,
+                                                      ros::Duration(time__));
+    ROS_INFO_STREAM("pose time " << time__);
 
     testing::quad_state_.x[QS::POSX] = (Scalar)desired_pose.position.x();
     testing::quad_state_.x[QS::POSY] = (Scalar)desired_pose.position.y();
@@ -225,14 +227,19 @@ int main(int argc, char* argv[]) {
 
     // add image to addin events
 
-    cv::Mat new_image;
+    cv::Mat new_image,rgb_img;
     testing::event_camera_->getRGBImage(new_image);
-    // testing::rgb_camera_->getRGBImage(new_image);
     // ROS_INFO_STREAM("New image val1 " << new_image.at<cv::Vec3b>(100, 100));
-    cv::cvtColor(new_image, new_image, CV_BGR2GRAY);
     sensor_msgs::ImagePtr rgb_msg =
-      cv_bridge::CvImage(std_msgs::Header(), "mono8", new_image).toImageMsg();
+      cv_bridge::CvImage(std_msgs::Header(), "bgr8", new_image).toImageMsg();
     testing::rgb_pub_.publish(rgb_msg);
+    cv::cvtColor(new_image, new_image, CV_BGR2GRAY);
+
+    // publishin rgb image without antialiasing
+    testing::rgb_camera_->getRGBImage(rgb_img);
+    sensor_msgs::ImagePtr rrgb_msg =
+      cv_bridge::CvImage(std_msgs::Header(), "bgr8", rgb_img).toImageMsg();
+    testing::rgb_rgb_pub_.publish(rrgb_msg);
 
     cv::Mat ev_img = testing::event_camera_->createEventimages();
     sensor_msgs::ImagePtr ev_msg =
@@ -405,6 +412,7 @@ int main(int argc, char* argv[]) {
 
     L_last = L.clone();
 
+    time__ += 0.001;
 
     // create plot
     frame++;

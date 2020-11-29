@@ -84,6 +84,8 @@ void saveToFile(std::vector<Event_t>);
 // publisher
 image_transport::Publisher rgb_pub_;
 image_transport::Publisher diff_pub_;
+image_transport::Publisher rgb_rgb_pub_;
+
 image_transport::Publisher event_pub_;
 
 cv::Mat rgb_image;

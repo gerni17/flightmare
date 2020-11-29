@@ -18,13 +18,13 @@ bool EventCamera::feedEventImageQueue(const cv::Mat& event) {
 
 bool EventCamera::feedEventQueue( std::vector<Event_t>& events) {
   // TODO:sort and order the events
-  for (auto i= events.begin();i<events.end();i++) {
-    if ((*i).time == 0) {
-      events.erase(i);
-      i--;
-    }
+  // for (auto i= events.begin();i<events.end();i++) {
+  //   if ((*i).time == 0) {
+  //     events.erase(i);
+  //     i--;
+  //   }
 
-  }
+  // }
   queue_mutex_.lock();
   event_queue_.push_back(events);
   // std::vector<Event> e(events.size()) ;
