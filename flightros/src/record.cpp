@@ -218,7 +218,7 @@ int main(int argc, char* argv[]) {
     record::rgb_camera_->getDepthMap(depth_image);
 
         sensor_msgs::ImagePtr rgb_msg =
-      cv_bridge::CvImage(std_msgs::Header(), "bgr8",new_image).toImageMsg();
+      cv_bridge::CvImage(std_msgs::Header(), "bgr8",depth_image).toImageMsg();
     record::rgb_pub_.publish(rgb_msg);
 
     // cv::cvtColor(new_image, new_image, CV_BGR2GRAY);

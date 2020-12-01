@@ -93,8 +93,8 @@ int main(int argc, char* argv[]) {
   testing::rgb_camera_->setWidth(352);
   testing::rgb_camera_->setHeight(264);
   testing::rgb_camera_->setRelPose(B_r_BC, R_BC);
-  testing::rgb_camera_->setPostProcesscing(std::vector<bool>{
-    false, false, false});  // depth, segmentation, optical flow
+  testing::rgb_camera_->setPostProcesscing(
+    std::vector<bool>{true, false, true});  // depth, segmentation, optical flow
   testing::quad_ptr_->addRGBCamera(testing::rgb_camera_);
   testing::event_camera_->setFOV(90);
   testing::event_camera_->setWidth(352);
@@ -134,10 +134,14 @@ int main(int argc, char* argv[]) {
     Quaternion(std::cos(0.5 * M_PI_2), 0.0, 0.0, std::sin(0.5 * M_PI_2)));
 
   // ROS
-  testing::rgb_pub_ = my_image_transport.advertise("camera/antialiasing_rgb", 1);
+  testing::rgb_pub_ =
+    my_image_transport.advertise("camera/antialiasing_rgb", 1);
   testing::rgb_rgb_pub_ = my_image_transport.advertise("camera/rgb", 1);
   testing::diff_pub_ = my_image_transport.advertise("camera/diff", 1);
   testing::event_pub_ = my_image_transport.advertise("camera/event", 1);
+  testing::of_pub_ = my_image_transport.advertise("camera/of", 1);
+  testing::depth_pub_ = my_image_transport.advertise("camera/depth", 1);
+
 
   testing::writer_ = std::make_shared<RosbagWriter>(
     testing::path_to_output_bag, testing::event_camera_->getMicroSimTime());
@@ -227,7 +231,7 @@ int main(int argc, char* argv[]) {
 
     // add image to addin events
 
-    cv::Mat new_image,rgb_img;
+    cv::Mat new_image, rgb_img, of_img, depth_img;
     testing::event_camera_->getRGBImage(new_image);
     // ROS_INFO_STREAM("New image val1 " << new_image.at<cv::Vec3b>(100, 100));
     sensor_msgs::ImagePtr rgb_msg =
@@ -242,13 +246,24 @@ int main(int argc, char* argv[]) {
     testing::rgb_rgb_pub_.publish(rrgb_msg);
 
     cv::Mat ev_img = testing::event_camera_->createEventimages();
+
     sensor_msgs::ImagePtr ev_msg =
       cv_bridge::CvImage(std_msgs::Header(), "bgr8", ev_img).toImageMsg();
     testing::event_pub_.publish(ev_msg);
     // ROS_INFO_STREAM("Type_ " << testing::type2str(new_image.type()));
+    bool was_of_empty = testing::rgb_camera_->getOpticalFlow(of_img);
 
+    sensor_msgs::ImagePtr of_msg =
+      cv_bridge::CvImage(std_msgs::Header(), "bgr8", of_img).toImageMsg();
+    testing::of_pub_.publish(of_msg);
+    bool was_depth_empty = testing::rgb_camera_->getDepthMap(depth_img);
+    sensor_msgs::ImagePtr depth_msg =
+      cv_bridge::CvImage(std_msgs::Header(), "mono8", depth_img).toImageMsg();
+    testing::depth_pub_.publish(depth_msg);
+    ROS_INFO_STREAM("recieved of and dept " << was_of_empty << " / "
+                                            << was_depth_empty);
 
-    ROS_INFO_STREAM("new image type " << testing::type2str(new_image.type()));
+    ROS_INFO_STREAM("new image type " << testing::type2str(of_img.type()));
 
     // ROS_WARN_STREAM("New image val2 " << new_image.at<uint>(100, 100));
     new_image.convertTo(I, cv::DataType<ImageFloatType>::type, 1. / 255.);

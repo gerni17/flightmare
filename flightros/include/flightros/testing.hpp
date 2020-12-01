@@ -87,6 +87,9 @@ image_transport::Publisher diff_pub_;
 image_transport::Publisher rgb_rgb_pub_;
 
 image_transport::Publisher event_pub_;
+image_transport::Publisher of_pub_;
+image_transport::Publisher depth_pub_;
+
 
 cv::Mat rgb_image;
 
