@@ -226,8 +226,12 @@ int main(int argc, char* argv[]) {
 
     testing::quad_ptr_->setState(testing::quad_state_);
 
+        ROS_INFO_STREAM("time " << testing::event_camera_->getSecSimTime());
+
     testing::unity_bridge_ptr_->getRender(0);
+    ROS_INFO_STREAM("time " << testing::event_camera_->getSecSimTime());
     testing::unity_bridge_ptr_->handleOutput(true);
+    ROS_INFO_STREAM("time " << testing::event_camera_->getSecSimTime());
 
     // add image to addin events
 
