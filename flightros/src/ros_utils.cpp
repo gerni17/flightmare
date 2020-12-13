@@ -31,7 +31,8 @@ void eventsToMsg(const EventsVector& events, int width, int height,
     dvs_msgs::Event ev;
     ev.x = e.coord_x;
     ev.y = e.coord_y;
-    ev.ts = toRosTime((e.time*1000 + starting_time) );
+    int64_t event_time=e.time;
+    ev.ts = toRosTime((event_time*1000 + starting_time) );
     ev.polarity = e.polarity;
     if(e.time>0){
     events_list.push_back(ev);

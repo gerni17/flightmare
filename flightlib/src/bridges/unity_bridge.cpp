@@ -24,6 +24,7 @@ bool UnityBridge::initializeConnections() {
   pub_.bind(client_address_ + ":" + pub_port_);
 
   // create and bind a download_socket
+  logger_.info(sub_port_);
   sub_.set(zmqpp::socket_option::receive_high_water_mark, 6);
   sub_.bind(client_address_ + ":" + sub_port_);
 
@@ -262,7 +263,8 @@ bool UnityBridge::handleOutput() {
 bool UnityBridge::handleOutput(bool always) {
   // create new message object
   zmqpp::message msg;
-
+  logger_.info(sub_port_);
+  
   sub_.receive(msg);
 
   // unpack message metadata

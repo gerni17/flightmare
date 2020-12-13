@@ -232,7 +232,7 @@ int main(int argc, char* argv[]) {
     ROS_INFO_STREAM("time " << testing::event_camera_->getSecSimTime());
     testing::unity_bridge_ptr_->handleOutput(true);
     ROS_INFO_STREAM("time " << testing::event_camera_->getSecSimTime());
-
+ROS_INFO_STREAM("time ") ;
     // add image to addin events
 
     cv::Mat new_image, rgb_img, of_img, depth_img;

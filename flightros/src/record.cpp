@@ -84,7 +84,7 @@ int main(int argc, char* argv[]) {
   record::rgb_camera_ = std::make_unique<RGBCamera>();
   record::event_camera_ = std::make_unique<EventCamera>();
 
-  // record::scene_id_ = 4;
+  record::scene_id_ = 4;
   record::rgb_pub_ = my_image_transport.advertise("camera/rgb", 1);
 
 
@@ -150,12 +150,20 @@ int main(int argc, char* argv[]) {
   // connect unity
   record::connectUnity();
 
+
+  quadrotor_common::TrajectoryPoint start_pt= quadrotor_common::TrajectoryPoint();
   // Define path through gates
   std::vector<Eigen::Vector3d> way_points;
-  way_points.push_back(Eigen::Vector3d(0, 10, 2.5));
-  way_points.push_back(Eigen::Vector3d(5, 0, 2.5));
-  way_points.push_back(Eigen::Vector3d(0, -10, 2.5));
-  way_points.push_back(Eigen::Vector3d(-5, 0, 2.5));
+  way_points.push_back(Eigen::Vector3d(0, 20, 2.5));
+  way_points.push_back(Eigen::Vector3d(2, 0, 2.5));
+  way_points.push_back(Eigen::Vector3d(0, -20, 2.5));
+  way_points.push_back(Eigen::Vector3d(-2, 0, 2.5));
+  // way_points.push_back(Eigen::Vector3d(-16, -13, 2.5));
+  // way_points.push_back(Eigen::Vector3d(-14, -14, 2.5));
+  // way_points.push_back(Eigen::Vector3d(-2, -13, 2.5));
+  // way_points.push_back(Eigen::Vector3d(0, -1, 2.5));
+  // way_points.push_back(Eigen::Vector3d(0, 80, 2.5));
+  // way_points.push_back(Eigen::Vector3d(0, -10, 2));
 
   std::size_t num_waypoints = way_points.size();
   Eigen::VectorXd segment_times(num_waypoints);
@@ -165,17 +173,17 @@ int main(int argc, char* argv[]) {
 
   polynomial_trajectories::PolynomialTrajectorySettings trajectory_settings =
     polynomial_trajectories::PolynomialTrajectorySettings(
-      way_points, minimization_weights, 7, 4);
+      way_points, minimization_weights, 7, 4);//these numbers here represent the order and the continuity...
 
   polynomial_trajectories::PolynomialTrajectory trajectory =
     polynomial_trajectories::minimum_snap_trajectories::
       generateMinimumSnapRingTrajectory(segment_times, trajectory_settings,
-                                        20.0, 20.0, 6.0);
+                                        20.0, 20.0, 6.0);//theselast three are max veloci and acc
 
   // record::events_text_file_.open("/home/gian/Desktop/events");
   // Start record
 
-  cv::Mat new_image, of_image, depth_image;
+  cv::Mat new_image, of_image, depth_image,ev_image;
   Image I;
   ROS_INFO_STREAM("Cp value " << cp);
 
@@ -204,7 +212,8 @@ int main(int argc, char* argv[]) {
     record::writer_->poseCallback(twc,
                                   record::event_camera_->getNanoSimTime());
 
-    ROS_INFO_STREAM("time " << record::event_camera_->getSecSimTime());
+    ROS_INFO_STREAM("pose " <<(Scalar)desired_pose.position.x() <<"/"<<(Scalar)desired_pose.position.y()<<"/"<<(Scalar)desired_pose.position.z()<<"/"<<
+     record::event_camera_->getSecSimTime());
 
     record::quad_ptr_->setState(record::quad_state_);
 
@@ -212,7 +221,7 @@ int main(int argc, char* argv[]) {
     record::unity_bridge_ptr_->handleOutput();
 
 
-    // record::event_camera_->getRGBImage(new_image);
+    record::event_camera_->getRGBImage(ev_image);
     record::rgb_camera_->getRGBImage(new_image);
     record::rgb_camera_->getOpticalFlow(of_image);
     record::rgb_camera_->getDepthMap(depth_image);
@@ -226,7 +235,7 @@ int main(int argc, char* argv[]) {
     // new_image.convertTo(I, cv::DataType<ImageFloatType>::type, 1. / 255.);
 
     // auto img_ptr = std::make_shared<Image>(I);
-    RGBImagePtr rgb_img_ptr = std::make_shared<RGBImage>(new_image);
+    RGBImagePtr rgb_img_ptr = std::make_shared<RGBImage>(ev_image);
     RGBImagePtr of_img_ptr = std::make_shared<RGBImage>(of_image);
     RGBImagePtr depth_img_ptr = std::make_shared<RGBImage>(depth_image);
 
@@ -242,6 +251,7 @@ int main(int argc, char* argv[]) {
           rgb_img_ptr, record::event_camera_->getNanoSimTime());
         record::writer_->imageOFCallback(
           of_img_ptr, record::event_camera_->getNanoSimTime());
+        record::writer_->imageDepthCallback(depth_img_ptr, record::event_camera_->getNanoSimTime());
 
         ROS_INFO_STREAM("image");
       }
