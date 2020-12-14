@@ -84,7 +84,7 @@ int main(int argc, char* argv[]) {
   record::rgb_camera_ = std::make_unique<RGBCamera>();
   record::event_camera_ = std::make_unique<EventCamera>();
 
-  record::scene_id_ = 4;
+  // record::scene_id_ = 4;
   record::rgb_pub_ = my_image_transport.advertise("camera/rgb", 1);
 
 
@@ -151,32 +151,97 @@ int main(int argc, char* argv[]) {
   record::connectUnity();
 
 
-  quadrotor_common::TrajectoryPoint start_pt= quadrotor_common::TrajectoryPoint();
+  // quadrotor_common::TrajectoryPoint start_pt= quadrotor_common::TrajectoryPoint();
+  Eigen::Vector3d zero_vec{0, 0, 0};
+  Eigen::Vector3d start_position{0.0, 0.0, 2.5};
+  Eigen::Quaterniond spawn_orientation(std::cos(0.5*M_PI_2),0.0,0.0,std::sin(0.5*M_PI_2));;
+  Eigen::Vector3d stop_position{0.0, 80.0, 2.5};
+
+
+  quadrotor_common::TrajectoryPoint start_state;
+  start_state.position = start_position;
+  start_state.orientation = spawn_orientation;
+  start_state.velocity = zero_vec;
+  start_state.acceleration = zero_vec;
+  start_state.jerk = zero_vec;
+  start_state.snap = zero_vec;
+  start_state.bodyrates = zero_vec;
+  start_state.angular_acceleration = zero_vec;
+  start_state.angular_jerk = zero_vec;
+  start_state.angular_snap = zero_vec;
+  start_state.heading = 0.0;
+  start_state.heading_rate = 0.0;
+  start_state.heading_acceleration = 0.0;
+
+  // Eigen::Quaterniond spawn_orientation(std::cos(1*M_PI_2),0.0,0.0,std::sin(1*M_PI_2));
+  quadrotor_common::TrajectoryPoint stop_state;
+  stop_state.position = stop_position;
+  stop_state.orientation = spawn_orientation;
+  stop_state.velocity = zero_vec;
+  stop_state.acceleration = zero_vec;
+  stop_state.jerk = zero_vec;
+  stop_state.snap = zero_vec;
+  stop_state.bodyrates = zero_vec;
+  stop_state.angular_acceleration = zero_vec;
+  stop_state.angular_jerk = zero_vec;
+  stop_state.angular_snap = zero_vec;
+  stop_state.heading = 0.0;
+  stop_state.heading_rate = 0.0;
+  stop_state.heading_acceleration = 0.0;
+
   // Define path through gates
   std::vector<Eigen::Vector3d> way_points;
-  way_points.push_back(Eigen::Vector3d(0, 20, 2.5));
-  way_points.push_back(Eigen::Vector3d(2, 0, 2.5));
-  way_points.push_back(Eigen::Vector3d(0, -20, 2.5));
-  way_points.push_back(Eigen::Vector3d(-2, 0, 2.5));
-  // way_points.push_back(Eigen::Vector3d(-16, -13, 2.5));
-  // way_points.push_back(Eigen::Vector3d(-14, -14, 2.5));
-  // way_points.push_back(Eigen::Vector3d(-2, -13, 2.5));
-  // way_points.push_back(Eigen::Vector3d(0, -1, 2.5));
-  // way_points.push_back(Eigen::Vector3d(0, 80, 2.5));
-  // way_points.push_back(Eigen::Vector3d(0, -10, 2));
+  // working traj of elipse
+  // way_points.push_back(Eigen::Vector3d(0, 20, 2.5));
+  // way_points.push_back(Eigen::Vector3d(1, 0, 2.5));
+  // way_points.push_back(Eigen::Vector3d(0, -20, 2.5));
+  // way_points.push_back(Eigen::Vector3d(-1, 0, 2.5));
+
+// trjectory of japan
+  // way_points.push_back(Eigen::Vector3d(1, 0, 2.5));
+  // way_points.push_back(Eigen::Vector3d(-1, -11, 2.5));
+  // way_points.push_back(Eigen::Vector3d(-5, -12, 2.5));
+  // way_points.push_back(Eigen::Vector3d(-8, -13, 2.5));
+  // way_points.push_back(Eigen::Vector3d(-10, -12, 2.5));
+  // way_points.push_back(Eigen::Vector3d(-8, -11, 2.5));
+  // way_points.push_back(Eigen::Vector3d(0, -14, 2.5));
+  // way_points.push_back(Eigen::Vector3d(1, -16, 2.5));
+  // way_points.push_back(Eigen::Vector3d(0, -18, 2.5));
+  // way_points.push_back(Eigen::Vector3d(-1, -16, 2.5));
+  // way_points.push_back(Eigen::Vector3d(-1, 0, 2.5));
+  // way_points.push_back(Eigen::Vector3d(0, 2, 2.5));
+
+  // selims example
+  way_points.push_back(Eigen::Vector3d(-10.0, 0.0, 4.0)); // initiale position
+  way_points.push_back(Eigen::Vector3d(0, 30, 7));
+  way_points.push_back(Eigen::Vector3d(10, 0, 5)); 
+  way_points.push_back(Eigen::Vector3d(0, -25, 10));
+  way_points.push_back(Eigen::Vector3d(-5, 0, 7));
+  way_points.push_back(Eigen::Vector3d(0, 15, 5));
+  way_points.push_back(Eigen::Vector3d(5, 0, 7));
+  way_points.push_back(Eigen::Vector3d(0, -10, 5));
+
+
+
 
   std::size_t num_waypoints = way_points.size();
   Eigen::VectorXd segment_times(num_waypoints);
-  segment_times << 10.0, 10.0, 10.0, 10.0;
+  segment_times << 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0;
   Eigen::VectorXd minimization_weights(num_waypoints);
-  minimization_weights << 1.0, 1.0, 1.0, 1.0;
+  minimization_weights << 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0;
 
   polynomial_trajectories::PolynomialTrajectorySettings trajectory_settings =
     polynomial_trajectories::PolynomialTrajectorySettings(
-      way_points, minimization_weights, 7, 4);//these numbers here represent the order and the continuity...
+      way_points, minimization_weights, 8, 7);//these numbers here represent the order and the continuity...
 
-  polynomial_trajectories::PolynomialTrajectory trajectory =
-    polynomial_trajectories::minimum_snap_trajectories::
+
+  // polynomial_trajectories::PolynomialTrajectory trajectory =
+  //   polynomial_trajectories::minimum_snap_trajectories::
+  //     generateMinimumSnapRingTrajectory(segment_times,start_state,stop_state, trajectory_settings,
+  //                                       20.0, 20.0, 6.0);//theselast three are max veloci and acc  polynomial_trajectories::PolynomialTrajectory trajectory =
+
+ polynomial_trajectories::PolynomialTrajectory trajectory =
+polynomial_trajectories::minimum_snap_trajectories::
       generateMinimumSnapRingTrajectory(segment_times, trajectory_settings,
                                         20.0, 20.0, 6.0);//theselast three are max veloci and acc
 

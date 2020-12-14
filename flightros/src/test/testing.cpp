@@ -84,7 +84,7 @@ int main(int argc, char* argv[]) {
   testing::rgb_camera_ = std::make_unique<RGBCamera>();
   testing::event_camera_ = std::make_unique<EventCamera>();
 
-  // testing::scene_id_ = 4;
+  testing::scene_id_ = 4;
   // Flightmare
   Vector<3> B_r_BC(0.0, 0.0, 0.3);
   Matrix<3, 3> R_BC = Quaternion(1.0, 0.0, 0.0, 0.0).toRotationMatrix();

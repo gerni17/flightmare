@@ -90,6 +90,6 @@ int count_;
 // std::vector<ze::real_t> values, amount;
 std::vector<float> errors;
 int num_cam=1;
-const std::string path_to_output_bag= "/home/gian/bags_flightmare/record.bag";
+const std::string path_to_output_bag= "/data/scratch/gian/record.bag";
 std::shared_ptr<RosbagWriter> writer_;
 }  // namespace testing
