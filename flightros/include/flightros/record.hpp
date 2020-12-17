@@ -74,8 +74,8 @@ void saveToFile(std::vector<Event_t>);
 
 void createMinSnap(const std::vector<Eigen::Vector3d> waypoints,
                    quadrotor_common::Trajectory* trajectory);
-// void createOwnSnap(polynomial_trajectories::PolynomialTrajectory* trajectory_,const std::vector<Eigen::Vector3d> waypoints,
-//                    quadrotor_common::Trajectory* sampled_trajectory);
+polynomial_trajectories::PolynomialTrajectory createOwnSnap( const std::vector<Eigen::Vector3d> waypoints_in);
+
 void samplePolynomial(
   quadrotor_common::Trajectory& trajectory,
   const polynomial_trajectories::PolynomialTrajectory& polynomial,

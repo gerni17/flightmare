@@ -132,6 +132,56 @@ void record::createMinSnap(const std::vector<Eigen::Vector3d> waypoints,
       max_roll_pitch_rate, sampling_freq);
 }
 
+polynomial_trajectories::PolynomialTrajectory record::createOwnSnap(
+  const std::vector<Eigen::Vector3d> waypoints_in) {
+  // identify the segment times
+  // Eigen::VectorXd segment_times_in =
+  // Eigen::VectorXd::Ones(waypoints_in.size() - 1);
+  Eigen::VectorXd segment_times_in(waypoints_in.size() - 1);
+  segment_times_in << 100.0, 100.0, 100.0;
+
+  double desired_speed_in = 1.0;
+  for (int i = 0; i < waypoints_in.size() - 1; i++) {
+    segment_times_in[i] =
+      (waypoints_in.at(i + 1) - waypoints_in.at(i)).norm() / desired_speed_in;
+    ROS_INFO_STREAM("seg time" << segment_times_in[i]);
+  }
+  Eigen::VectorXd minimization_weights_in(4);
+  //  minimization_weights << 0.1, 10.0, 100.0, 100.0;
+  minimization_weights_in << 0.0, 0.0, 0.0, 100.0;
+  double sampling_freq_in = 50.0;
+  quadrotor_common::TrajectoryPoint start_state_in;
+  start_state_in.position = waypoints_in.front();
+  start_state_in.velocity =
+    Eigen::Vector3d::UnitX() *
+    0.05;  // hack to get a smooth heading trajectory at the beginning
+  quadrotor_common::TrajectoryPoint end_state_in;
+  end_state_in.position = waypoints_in.back();
+  // maybe the problem lies in the time from start
+  std::vector<Eigen::Vector3d> waypoints_no_start_end_in = waypoints_in;
+  waypoints_no_start_end_in.erase(waypoints_no_start_end_in.begin());
+  waypoints_no_start_end_in.pop_back();
+  std::cout << "generating trajectory through "
+            << waypoints_no_start_end_in.size() << " waypoints with "
+            << segment_times_in.size() << " segment times" << std::endl;
+  polynomial_trajectories::PolynomialTrajectorySettings trajectory_settings_in;
+  trajectory_settings_in.way_points = waypoints_no_start_end_in;
+  trajectory_settings_in.minimization_weights = minimization_weights_in;
+  trajectory_settings_in.polynomial_order = 11;
+  trajectory_settings_in.continuity_order = 4;
+  double max_velocity_in = 5.0;
+  double max_collective_thrust_in = 20.0;
+  double max_roll_pitch_rate_in = 3.0;
+
+
+  polynomial_trajectories::PolynomialTrajectory trajectory_in =
+    polynomial_trajectories::minimum_snap_trajectories::
+      generateMinimumSnapTrajectory(
+        segment_times_in, start_state_in, end_state_in, trajectory_settings_in,
+        max_velocity_in, max_collective_thrust_in, max_roll_pitch_rate_in);
+  return trajectory_in;
+}
+
 
 void record::saveToFile(std::vector<Event_t> events) {
   // CHECK_EQ(events.size(), 1);
@@ -212,6 +262,7 @@ int main(int argc, char* argv[]) {
 
   // connect unity
   record::connectUnity();
+
   // //   // Define path through gates
   // //   std::vector<Eigen::Vector3d> way_points;
   // //   // working traj of elipse
@@ -256,103 +307,36 @@ int main(int argc, char* argv[]) {
   // //   // way_points.push_back(Eigen::Vector3d(0, 15, 5));
   // //   // way_points.push_back(Eigen::Vector3d(5, 0, 7));
   // //   // way_points.push_back(Eigen::Vector3d(0, -10, 5));
-  // // // // // // // // // // // //
-  // Initialize the REAL trajectory
-
-  Eigen::Vector3d zero_vec{0, 0, 0};
-  Eigen::Vector3d start_position{0.0, 0.0, 0.0};
-  Eigen::Quaterniond spawn_orientation(std::cos(1 * M_PI_2), 0.0, 0.0,
-                                       std::sin(1 * M_PI_2));
-  ;
-  Eigen::Vector3d stop_position{4.0, 0.0, 2.5};
-
-
-  quadrotor_common::TrajectoryPoint start_state;
-  start_state.position = start_position;
-  start_state.orientation = spawn_orientation;
-  start_state.velocity = zero_vec;
-  start_state.acceleration = zero_vec;
-  start_state.jerk = zero_vec;
-  start_state.snap = zero_vec;
-  start_state.bodyrates = zero_vec;
-  start_state.angular_acceleration = zero_vec;
-  start_state.angular_jerk = zero_vec;
-  start_state.angular_snap = zero_vec;
-  start_state.heading = 0.0;
-  start_state.heading_rate = 0.0;
-  start_state.heading_acceleration = 0.0;
-
-  // Eigen::Quaterniond
-  // spawn_orientation(std::cos(1*M_PI_2),0.0,0.0,std::sin(1*M_PI_2));
-  quadrotor_common::TrajectoryPoint stop_state;
-  stop_state.position = stop_position;
-  stop_state.orientation = spawn_orientation;
-  stop_state.velocity = zero_vec;
-  stop_state.acceleration = zero_vec;
-  stop_state.jerk = zero_vec;
-  stop_state.snap = zero_vec;
-  stop_state.bodyrates = zero_vec;
-  stop_state.angular_acceleration = zero_vec;
-  stop_state.angular_jerk = zero_vec;
-  stop_state.angular_snap = zero_vec;
-  stop_state.heading = 0.0;
-  stop_state.heading_rate = 0.0;
-  stop_state.heading_acceleration = 0.0;
-
-  // Define path through gates
-  std::vector<Eigen::Vector3d> way_points;
-
-
-  way_points.push_back(Eigen::Vector3d(0.0, 0.0, 2.5));
-  way_points.push_back(Eigen::Vector3d(2.0, 2.0, 2.5));
-
-
-  std::size_t num_waypoints = way_points.size();
-  Eigen::VectorXd segment_times(num_waypoints + 1);
-  segment_times << 100.0, 100.0, 100.0;
-  Eigen::VectorXd minimization_weights(4);
-  minimization_weights << 0.0, 0.0, 0.0, 1.0;
-
-  polynomial_trajectories::PolynomialTrajectorySettings trajectory_settings =
-    polynomial_trajectories::PolynomialTrajectorySettings(
-      way_points, minimization_weights, 8,
-      4);  // these numbers here represent the order and the continuity...
-
-
-  double max_velocity = 5.0;
-  double max_collective_thrust = 20.0;
-  double max_roll_pitch_rate = 3.0;
-  polynomial_trajectories::PolynomialTrajectory trajectory =
-    polynomial_trajectories::minimum_snap_trajectories::
-      generateMinimumSnapTrajectory(segment_times, start_state, stop_state,
-                                    trajectory_settings, max_velocity,
-                                    max_collective_thrust, max_roll_pitch_rate);
-
-  quadrotor_common::Trajectory sampled_trajectory;
-  record::samplePolynomial(sampled_trajectory, trajectory, 10.0);
 
   //////////////////////////////////////////////////////////
-  // Completely done with helper function
-
+  // Completely done with own function
   std::vector<Eigen::Vector3d> way_points_;
   way_points_.push_back(Eigen::Vector3d(0.0, 0.0, 0.0));
   way_points_.push_back(Eigen::Vector3d(0.0, 0.0, 2.5));
   way_points_.push_back(Eigen::Vector3d(2.0, 2.0, 2.5));
   way_points_.push_back(Eigen::Vector3d(4.0, 0.0, 2.5));
 
-  quadrotor_common::Trajectory trajectory_;
-  record::createMinSnap(way_points_, &trajectory_);
+
+  polynomial_trajectories::PolynomialTrajectory trajectory_ =
+    record::createOwnSnap(way_points_);
+  quadrotor_common::Trajectory sampled_trajectory_;
+
+  record::samplePolynomial(sampled_trajectory_, trajectory_, 10.0);
+
+
+  // // quadrotor_common::Trajectory sampled_trajectory_;
+  // // record::createMinSnap(way_points_, &sampled_trajectory_);
 
 
   nav_msgs::Path path;
   path.header.frame_id = "/map";
   int it = 0;
-  for (auto pt : trajectory_.points) {
+  for (auto pt : sampled_trajectory_.points) {
     geometry_msgs::PoseStamped pose;
     pose.header.frame_id = "/map";
-    pose.pose.position.x = pt.position[2];
+    pose.pose.position.x = pt.position[0];
     pose.pose.position.y = pt.position[1];
-    pose.pose.position.z = pt.position[0];
+    pose.pose.position.z = pt.position[2];
     path.poses.push_back(pose);
     ROS_INFO_STREAM(it);
     ROS_INFO_STREAM("pt   " << pt.position[2] << "/" << pt.position[1] << "/"
@@ -377,27 +361,7 @@ int main(int argc, char* argv[]) {
     desired_path.poses.push_back(pose);
   }
 
-  ////////////////////////////////////////////////////////////
-  //  sample own polynomial to rospath
 
-  nav_msgs::Path path2;
-  path2.header.frame_id = "/map";
-  int it_ = 0;
-  for (auto pt : sampled_trajectory.points) {
-    geometry_msgs::PoseStamped pose;
-    pose.header.frame_id = "/map";
-    pose.pose.position.x = pt.position[0];
-    pose.pose.position.y = pt.position[1];
-    pose.pose.position.z = pt.position[2];
-    path2.poses.push_back(pose);
-    ROS_INFO_STREAM(it_);
-    ROS_INFO_STREAM("pt2   " << pt.position[2] << "/" << pt.position[1] << "/"
-                             << pt.position[0]);
-    ROS_INFO_STREAM("pose2 " << pose.pose.position.x << "/"
-                             << pose.pose.position.y << "/"
-                             << pose.pose.position.z);
-    it_++;
-  }
 
   cv::Mat new_image, of_image, depth_image, ev_image;
   Image I;
@@ -406,7 +370,7 @@ int main(int argc, char* argv[]) {
   while (ros::ok() && record::unity_render_ && record::unity_ready_) {
     quadrotor_common::TrajectoryPoint desired_pose =
       polynomial_trajectories::getPointFromTrajectory(
-        trajectory, ros::Duration(record::event_camera_->getSecSimTime()));
+        trajectory_, ros::Duration(record::event_camera_->getSecSimTime()));
 
     record::quad_state_.x[QS::POSX] = (Scalar)desired_pose.position.x();
     record::quad_state_.x[QS::POSY] = (Scalar)desired_pose.position.y();
@@ -417,7 +381,7 @@ int main(int argc, char* argv[]) {
     record::quad_state_.x[QS::ATTZ] = (Scalar)desired_pose.orientation.z();
     traj_pub_.publish(path);
     line_pub_.publish(desired_path);
-    own_traj_pub_.publish(path2);
+    // own_traj_pub_.publish(path2);
 
 
     ze::Transformation twc;
