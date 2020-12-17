@@ -9,10 +9,9 @@
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 
-#include "opencv2/imgcodecs.hpp"
-
-#include "flightros/rosbag_writer.hpp"
 #include "flightros/ros_utils.hpp"
+#include "flightros/rosbag_writer.hpp"
+#include "opencv2/imgcodecs.hpp"
 
 
 // standard libraries
@@ -40,13 +39,20 @@
 #include "flightlib/sensors/rgb_camera.hpp"
 
 // trajectory
+#include <geometry_msgs/PoseStamped.h>
+#include <nav_msgs/Path.h>
 #include <polynomial_trajectories/minimum_snap_trajectories.h>
 #include <polynomial_trajectories/polynomial_trajectories_common.h>
 #include <polynomial_trajectories/polynomial_trajectory.h>
 #include <polynomial_trajectories/polynomial_trajectory_settings.h>
 #include <quadrotor_common/trajectory_point.h>
+#include <quadrotor_msgs/Trajectory.h>
 
 #include <fstream>
+
+#include "trajectory_generation_helper/polynomial_trajectory_helper.h"
+
+
 // #include <ze/common/file_utils.hpp>
 // #include <ze/common/path_utils.hpp>
 // #include <ze/common/string_utils.hpp>
@@ -66,9 +72,15 @@ bool connectUnity(void);
 std::string type2str(int type);
 void saveToFile(std::vector<Event_t>);
 
-
-
-// cv::Mat rgb_image;
+void createMinSnap(const std::vector<Eigen::Vector3d> waypoints,
+                   quadrotor_common::Trajectory* trajectory);
+// void createOwnSnap(polynomial_trajectories::PolynomialTrajectory* trajectory_,const std::vector<Eigen::Vector3d> waypoints,
+//                    quadrotor_common::Trajectory* sampled_trajectory);
+void samplePolynomial(
+  quadrotor_common::Trajectory& trajectory,
+  const polynomial_trajectories::PolynomialTrajectory& polynomial,
+  const double sampling_frequency);
+// // cv::Mat rgb_image;
 image_transport::Publisher rgb_pub_;
 
 
@@ -89,7 +101,9 @@ std::ofstream events_text_file_;
 int count_;
 // std::vector<ze::real_t> values, amount;
 std::vector<float> errors;
-int num_cam=1;
-const std::string path_to_output_bag= "/data/scratch/gian/record.bag";
+int num_cam = 1;
+// const std::string path_to_output_bag= "/data/scratch/gian/record.bag";
+const std::string path_to_output_bag = "/home/gian/bags_flightmare/record.bag";
+
 std::shared_ptr<RosbagWriter> writer_;
-}  // namespace testing
+}  // namespace record
