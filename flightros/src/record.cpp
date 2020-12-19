@@ -138,7 +138,8 @@ polynomial_trajectories::PolynomialTrajectory record::createOwnSnap(
   // Eigen::VectorXd segment_times_in =
   // Eigen::VectorXd::Ones(waypoints_in.size() - 1);
   Eigen::VectorXd segment_times_in(waypoints_in.size() - 1);
-  segment_times_in << 100.0, 100.0, 100.0;
+  segment_times_in << 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0,
+    100.0, 100.0, 100.0,100.0;
 
   double desired_speed_in = 1.0;
   for (int i = 0; i < waypoints_in.size() - 1; i++) {
@@ -167,7 +168,7 @@ polynomial_trajectories::PolynomialTrajectory record::createOwnSnap(
   polynomial_trajectories::PolynomialTrajectorySettings trajectory_settings_in;
   trajectory_settings_in.way_points = waypoints_no_start_end_in;
   trajectory_settings_in.minimization_weights = minimization_weights_in;
-  trajectory_settings_in.polynomial_order = 11;
+  trajectory_settings_in.polynomial_order = 18;
   trajectory_settings_in.continuity_order = 4;
   double max_velocity_in = 5.0;
   double max_collective_thrust_in = 20.0;
@@ -209,7 +210,7 @@ int main(int argc, char* argv[]) {
   record::rgb_camera_ = std::make_unique<RGBCamera>();
   record::event_camera_ = std::make_unique<EventCamera>();
 
-  // record::scene_id_ = 4;
+  record::scene_id_ = 4;
   record::rgb_pub_ = my_image_transport.advertise("camera/rgb", 1);
   ros::Publisher trajectory_pub_ =
     nh.advertise<quadrotor_msgs::Trajectory>("autopilot/trajectory", 1);
@@ -327,17 +328,31 @@ int main(int argc, char* argv[]) {
   //////////////////////////////////////////////////////////
   // Completely done with own function
   std::vector<Eigen::Vector3d> way_points_;
-  way_points_.push_back(Eigen::Vector3d(0.0, 0.0, 0.0));
-  way_points_.push_back(Eigen::Vector3d(0.0, 0.0, 2.5));
-  way_points_.push_back(Eigen::Vector3d(2.0, 2.0, 2.5));
-  way_points_.push_back(Eigen::Vector3d(4.0, 0.0, 2.5));
+  // way_points_.push_back(Eigen::Vector3d(0.0, 0.0, 0.0));
+  // way_points_.push_back(Eigen::Vector3d(0.0, 0.0, 2.5));
+  // way_points_.push_back(Eigen::Vector3d(2.0, 2.0, 2.5));
+  // way_points_.push_back(Eigen::Vector3d(4.0, 0.0, 2.5));
+
+  way_points_.push_back(Eigen::Vector3d(1, 0, 2.5));
+  way_points_.push_back(Eigen::Vector3d(-1, -11, 2.5));
+  way_points_.push_back(Eigen::Vector3d(-5, -12, 2.5));
+  way_points_.push_back(Eigen::Vector3d(-8, -13, 2.5));
+  way_points_.push_back(Eigen::Vector3d(-10, -12, 2.5));
+  way_points_.push_back(Eigen::Vector3d(-8, -11, 2.5));
+  way_points_.push_back(Eigen::Vector3d(0, -14, 2.5));
+  way_points_.push_back(Eigen::Vector3d(1, -16, 2.5));
+  way_points_.push_back(Eigen::Vector3d(0, -18, 2.5));
+  way_points_.push_back(Eigen::Vector3d(-1, -16, 2.5));
+  way_points_.push_back(Eigen::Vector3d(-1, -8, 2.5));
+  way_points_.push_back(Eigen::Vector3d(-1, 0, 2.5));
+  way_points_.push_back(Eigen::Vector3d(0, 2, 2.5));
 
 
   polynomial_trajectories::PolynomialTrajectory trajectory_ =
     record::createOwnSnap(way_points_);
   quadrotor_common::Trajectory sampled_trajectory_;
 
-  record::samplePolynomial(sampled_trajectory_, trajectory, 10.0);
+  record::samplePolynomial(sampled_trajectory_, trajectory_, 10.0);
 
 
   // // quadrotor_common::Trajectory sampled_trajectory_;
@@ -368,7 +383,7 @@ int main(int argc, char* argv[]) {
   nav_msgs::Path desired_path;
   desired_path.header.frame_id = "/map";
 
-  for (auto pt : way_points) {
+  for (auto pt : way_points_) {
     geometry_msgs::PoseStamped pose;
     pose.header.frame_id = "/map";
     pose.pose.position.x = pt[0];
@@ -378,7 +393,6 @@ int main(int argc, char* argv[]) {
   }
 
 
-
   cv::Mat new_image, of_image, depth_image, ev_image;
   Image I;
   ROS_INFO_STREAM("Cp value " << cp);
@@ -386,7 +400,7 @@ int main(int argc, char* argv[]) {
   while (ros::ok() && record::unity_render_ && record::unity_ready_) {
     quadrotor_common::TrajectoryPoint desired_pose =
       polynomial_trajectories::getPointFromTrajectory(
-        trajectory, ros::Duration(record::event_camera_->getSecSimTime()));
+        trajectory_, ros::Duration(record::event_camera_->getSecSimTime()));
 
     record::quad_state_.x[QS::POSX] = (Scalar)desired_pose.position.x();
     record::quad_state_.x[QS::POSY] = (Scalar)desired_pose.position.y();
@@ -452,8 +466,8 @@ int main(int argc, char* argv[]) {
     if (record) {
       // add image to addin events
       if (record::event_camera_->getImgStore()) {
-            cv::Mat event_img = record::event_camera_->createEventimages();
-    RGBImagePtr event_img_ptr = std::make_shared<RGBImage>(event_img);
+        cv::Mat event_img = record::event_camera_->createEventimages();
+        RGBImagePtr event_img_ptr = std::make_shared<RGBImage>(event_img);
 
         record::writer_->imageRGBCallback(
           rgb_img_ptr, record::event_camera_->getNanoSimTime());
@@ -461,7 +475,7 @@ int main(int argc, char* argv[]) {
           of_img_ptr, record::event_camera_->getNanoSimTime());
         record::writer_->imageDepthCallback(
           depth_img_ptr, record::event_camera_->getNanoSimTime());
-                  record::writer_->imageEventCallback(
+        record::writer_->imageEventCallback(
           event_img_ptr, record::event_camera_->getNanoSimTime());
 
         ROS_INFO_STREAM("image");
