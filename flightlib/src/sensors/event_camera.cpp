@@ -16,7 +16,7 @@ bool EventCamera::feedEventImageQueue(const cv::Mat& event) {
   return true;
 }
 
-bool EventCamera::feedEventQueue( std::vector<Event_t>& events) {
+bool EventCamera::feedEventQueue(std::vector<Event_t>& events) {
   // TODO:sort and order the events
   // for (auto i= events.begin();i<events.end();i++) {
   //   if ((*i).time == 0) {
@@ -31,6 +31,8 @@ bool EventCamera::feedEventQueue( std::vector<Event_t>& events) {
   event_queue_for_img.resize(events.size());
   event_queue_for_img = events;
   event_queue_for_test = events;
+  event_queue_sum.insert(std::end(event_queue_sum), std::begin(events),
+                         std::end(events));
   queue_mutex_.unlock();
   std::string amount = std::to_string(event_queue_for_img.size());
   logger_.warn(amount);
@@ -158,12 +160,12 @@ bool EventCamera::changeTime(TimeMessage_t time_msg) {
     return false;
   }
   sim_time = time_msg.current_time;
-  delta_time=time_msg.next_timestep;
+  delta_time = time_msg.next_timestep;
   return true;
 }
 double EventCamera::getSecSimTime() { return sim_time / 1000000.0; }
 int64_t EventCamera::getMicroSimTime() { return sim_time; }
-int64_t EventCamera::getNanoSimTime() { return sim_time*1000; }
+int64_t EventCamera::getNanoSimTime() { return sim_time * 1000; }
 int64_t EventCamera::getMicroTime() { return real_time; }
 
 
@@ -228,7 +230,7 @@ bool EventCamera::getEventImages(cv::Mat& event) {
 
 std::vector<Event_t> EventCamera::getEvents() {
   std::vector<Event_t> events;
-  if (!event_queue_.empty()) {
+  if (!event_queue_for_test.empty()) {
     // seems wrong here
     events = event_queue_for_test;
     // event_queue_for_test.clear();
@@ -239,7 +241,7 @@ std::vector<Event_t> EventCamera::getEvents() {
 }
 
 bool EventCamera::deleteEventQueue() {
-  if (!event_queue_.empty()) {
+  if (!event_queue_for_test.empty()) {
     event_queue_for_test.clear();
     return true;
   }
@@ -260,9 +262,9 @@ cv::Mat EventCamera::createEventimages() {
   // image.at<cv::Vec3b>(10, 10)[2] = 255;
 
   int count = 0;
-  events = event_queue_for_test;
+  // events = event_queue_sum;
   // event_queue_for_test.clear();
-  for (auto event : events) {
+  for (auto event : event_queue_sum) {
     if (event.coord_x > wid || event.coord_y > hei) {
       logger_.error("coord out of the image");
     }
@@ -283,8 +285,9 @@ cv::Mat EventCamera::createEventimages() {
       image.at<cv::Vec3b>(event.coord_y, event.coord_x)[2] = 0;
     }
   }
-  std::string amount = std::to_string(count);
-  logger_.warn(amount);
+  // std::string amount = std::to_string(count);
+  // logger_.warn(amount);
+  event_queue_sum.clear();
   // cv::Mat flipped_image = cv::Mat::zeros(cv::Size(wid, hei), CV_64FC1);
 
   // cv::flip(flipped_image, image, 0);

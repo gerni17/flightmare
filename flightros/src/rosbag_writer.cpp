@@ -104,12 +104,35 @@ void RosbagWriter::imageRGBCallback(const RGBImagePtr& image, int64_t t)
     {
       sensor_msgs::ImagePtr msg;
       imageToMsg(*image, t+starting_time, msg);
-      bag_.write(getTopicName(topic_name_prefix_, 0, "image_raw"),
+      bag_.write(getTopicName(topic_name_prefix_, 0, "image_rgb_raw"),
                  msg->header.stamp, msg);
     }
   
   last_published_image_time_ = t+starting_time;
 }
+void RosbagWriter::imageEventCallback(const RGBImagePtr& image, int64_t t)
+{
+    sensor_size_ = image->size();
+
+    // static const Duration min_time_interval_between_published_images_
+    //     = ze::secToNanosec(1.0 / FLAGS_ros_publisher_frame_rate);
+    // if(last_published_image_time_ > 0 && t - last_published_image_time_ <
+    // min_time_interval_between_published_images_)
+    // {
+    //   return;
+    // }
+    // ROS_INFO_STREAM("writing"<<image);
+    if(image)
+    {
+      sensor_msgs::ImagePtr msg;
+      imageToMsg(*image, t+starting_time, msg);
+      bag_.write(getTopicName(topic_name_prefix_, 0, "image_event"),
+                 msg->header.stamp, msg);
+    }
+  
+  last_published_image_time_ = t+starting_time;
+}
+
 void RosbagWriter::imageOFCallback(const RGBImagePtr& image, int64_t t)
 {
     sensor_size_ = image->size();

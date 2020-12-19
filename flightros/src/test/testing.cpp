@@ -89,19 +89,19 @@ int main(int argc, char* argv[]) {
   Vector<3> B_r_BC(0.0, 0.0, 0.3);
   Matrix<3, 3> R_BC = Quaternion(1.0, 0.0, 0.0, 0.0).toRotationMatrix();
   // std::cout << R_BC << std::endl;
-  testing::rgb_camera_->setFOV(90);
+  testing::rgb_camera_->setFOV(83);
   testing::rgb_camera_->setWidth(352);
   testing::rgb_camera_->setHeight(264);
   testing::rgb_camera_->setRelPose(B_r_BC, R_BC);
   testing::rgb_camera_->setPostProcesscing(
     std::vector<bool>{true, false, true});  // depth, segmentation, optical flow
   testing::quad_ptr_->addRGBCamera(testing::rgb_camera_);
-  testing::event_camera_->setFOV(90);
+  testing::event_camera_->setFOV(83);
   testing::event_camera_->setWidth(352);
   testing::event_camera_->setHeight(264);
   testing::event_camera_->setRelPose(B_r_BC, R_BC);
-  testing::event_camera_->setCp(0.1);
-  testing::event_camera_->setCm(0.1);
+  testing::event_camera_->setCp(0.2);
+  testing::event_camera_->setCm(0.2);
   testing::event_camera_->setsigmaCm(0.0);
   testing::event_camera_->setsigmaCp(0.0);
   testing::event_camera_->setRefractory(1);

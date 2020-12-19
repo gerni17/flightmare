@@ -122,6 +122,7 @@ class EventCamera : SensorBase {
   std::deque<std::vector<Event_t>> event_queue_;
   std::vector<Event_t> event_queue_for_img;
   std::vector<Event_t> event_queue_for_test;
+    std::vector<Event_t> event_queue_sum;
 
   bool store_image_=false;
 

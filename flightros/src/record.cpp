@@ -224,14 +224,14 @@ int main(int argc, char* argv[]) {
   Vector<3> B_r_BC(0.0, 0.0, 0.3);
   Matrix<3, 3> R_BC = Quaternion(1.0, 0.0, 0.0, 0.0).toRotationMatrix();
   // std::cout << R_BC << std::endl;
-  record::rgb_camera_->setFOV(90);
+  record::rgb_camera_->setFOV(83);
   record::rgb_camera_->setWidth(352);
   record::rgb_camera_->setHeight(264);
   record::rgb_camera_->setRelPose(B_r_BC, R_BC);
   record::rgb_camera_->setPostProcesscing(
     std::vector<bool>{true, false, true});  // depth, segmentation, optical flow
   record::quad_ptr_->addRGBCamera(record::rgb_camera_);
-  record::event_camera_->setFOV(90);
+  record::event_camera_->setFOV(83);
   record::event_camera_->setWidth(352);
   record::event_camera_->setHeight(264);
   record::event_camera_->setRelPose(B_r_BC, R_BC);
@@ -264,12 +264,28 @@ int main(int argc, char* argv[]) {
   record::connectUnity();
 
   // //   // Define path through gates
-  // //   std::vector<Eigen::Vector3d> way_points;
-  // //   // working traj of elipse
-  // //   // way_points.push_back(Eigen::Vector3d(0, 20, 2.5));
-  // //   // way_points.push_back(Eigen::Vector3d(1, 0, 2.5));
-  // //   // way_points.push_back(Eigen::Vector3d(0, -20, 2.5));
-  // //   // way_points.push_back(Eigen::Vector3d(-1, 0, 2.5));
+  std::vector<Eigen::Vector3d> way_points;
+  way_points.push_back(Eigen::Vector3d(0, 10, 2.5));
+  way_points.push_back(Eigen::Vector3d(5, 0, 2.5));
+  way_points.push_back(Eigen::Vector3d(0, -10, 2.5));
+  way_points.push_back(Eigen::Vector3d(-5, 0, 2.5));
+  way_points.push_back(Eigen::Vector3d(-7, 10, 2.5));
+  way_points.push_back(Eigen::Vector3d(-5, 20, 2.5));
+
+  std::size_t num_waypoints = way_points.size();
+  Eigen::VectorXd segment_times(num_waypoints);
+  segment_times << 50.0, 50.0, 50.0, 50.0, 50.0, 50.0;
+  Eigen::VectorXd minimization_weights(num_waypoints);
+  minimization_weights << 0.0, 0.0, 0.0, 1.0;
+
+  polynomial_trajectories::PolynomialTrajectorySettings trajectory_settings =
+    polynomial_trajectories::PolynomialTrajectorySettings(
+      way_points, minimization_weights, 7, 4);
+
+  polynomial_trajectories::PolynomialTrajectory trajectory =
+    polynomial_trajectories::minimum_snap_trajectories::
+      generateMinimumSnapRingTrajectory(segment_times, trajectory_settings,
+                                        20.0, 20.0, 6.0);
 
   // // // first trajectory of japan
 
@@ -321,7 +337,7 @@ int main(int argc, char* argv[]) {
     record::createOwnSnap(way_points_);
   quadrotor_common::Trajectory sampled_trajectory_;
 
-  record::samplePolynomial(sampled_trajectory_, trajectory_, 10.0);
+  record::samplePolynomial(sampled_trajectory_, trajectory, 10.0);
 
 
   // // quadrotor_common::Trajectory sampled_trajectory_;
@@ -352,7 +368,7 @@ int main(int argc, char* argv[]) {
   nav_msgs::Path desired_path;
   desired_path.header.frame_id = "/map";
 
-  for (auto pt : way_points_) {
+  for (auto pt : way_points) {
     geometry_msgs::PoseStamped pose;
     pose.header.frame_id = "/map";
     pose.pose.position.x = pt[0];
@@ -370,15 +386,19 @@ int main(int argc, char* argv[]) {
   while (ros::ok() && record::unity_render_ && record::unity_ready_) {
     quadrotor_common::TrajectoryPoint desired_pose =
       polynomial_trajectories::getPointFromTrajectory(
-        trajectory_, ros::Duration(record::event_camera_->getSecSimTime()));
+        trajectory, ros::Duration(record::event_camera_->getSecSimTime()));
 
     record::quad_state_.x[QS::POSX] = (Scalar)desired_pose.position.x();
     record::quad_state_.x[QS::POSY] = (Scalar)desired_pose.position.y();
     record::quad_state_.x[QS::POSZ] = (Scalar)desired_pose.position.z();
-    record::quad_state_.x[QS::ATTW] = (Scalar)desired_pose.orientation.w();
-    record::quad_state_.x[QS::ATTX] = (Scalar)desired_pose.orientation.x();
-    record::quad_state_.x[QS::ATTY] = (Scalar)desired_pose.orientation.y();
-    record::quad_state_.x[QS::ATTZ] = (Scalar)desired_pose.orientation.z();
+    // record::quad_state_.x[QS::ATTW] = (Scalar)desired_pose.orientation.w();
+    // record::quad_state_.x[QS::ATTX] = (Scalar)desired_pose.orientation.x();
+    // record::quad_state_.x[QS::ATTY] = (Scalar)desired_pose.orientation.y();
+    // record::quad_state_.x[QS::ATTZ] = (Scalar)desired_pose.orientation.z();
+    record::quad_state_.x[QS::ATTW] = 1.0;
+    record::quad_state_.x[QS::ATTX] = 0.0;
+    record::quad_state_.x[QS::ATTY] = 0.0;
+    record::quad_state_.x[QS::ATTZ] = 0.0;
     traj_pub_.publish(path);
     line_pub_.publish(desired_path);
     // own_traj_pub_.publish(path2);
@@ -432,12 +452,17 @@ int main(int argc, char* argv[]) {
     if (record) {
       // add image to addin events
       if (record::event_camera_->getImgStore()) {
+            cv::Mat event_img = record::event_camera_->createEventimages();
+    RGBImagePtr event_img_ptr = std::make_shared<RGBImage>(event_img);
+
         record::writer_->imageRGBCallback(
           rgb_img_ptr, record::event_camera_->getNanoSimTime());
         record::writer_->imageOFCallback(
           of_img_ptr, record::event_camera_->getNanoSimTime());
         record::writer_->imageDepthCallback(
           depth_img_ptr, record::event_camera_->getNanoSimTime());
+                  record::writer_->imageEventCallback(
+          event_img_ptr, record::event_camera_->getNanoSimTime());
 
         ROS_INFO_STREAM("image");
       }

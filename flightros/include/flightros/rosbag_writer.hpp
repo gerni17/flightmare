@@ -32,6 +32,8 @@ class RosbagWriter {
   void imageDepthCallback(const RGBImagePtr& image, int64_t t);
   void eventsCallback(const EventsVector& events, int64_t t);
   void poseCallback(const ze::Transformation& T_W_C, int64_t t);
+  void imageEventCallback(const RGBImagePtr& images, int64_t t);
+
   // void poseCallback(const flightlib::Quaternion& T_W_C, int64_t t);
 
   // virtual void twistCallback(const AngularVelocityVector& ws,
