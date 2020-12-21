@@ -225,15 +225,15 @@ int main(int argc, char* argv[]) {
   Matrix<3, 3> R_BC = Quaternion(1.0, 0.0, 0.0, 0.0).toRotationMatrix();
   // std::cout << R_BC << std::endl;
   record::rgb_camera_->setFOV(83);
-  record::rgb_camera_->setWidth(352);
-  record::rgb_camera_->setHeight(264);
+  record::rgb_camera_->setWidth(512);
+  record::rgb_camera_->setHeight(352);
   record::rgb_camera_->setRelPose(B_r_BC, R_BC);
   record::rgb_camera_->setPostProcesscing(
     std::vector<bool>{true, false, true});  // depth, segmentation, optical flow
   record::quad_ptr_->addRGBCamera(record::rgb_camera_);
   record::event_camera_->setFOV(83);
-  record::event_camera_->setWidth(352);
-  record::event_camera_->setHeight(264);
+  record::event_camera_->setWidth(512);
+  record::event_camera_->setHeight(352);
   record::event_camera_->setRelPose(B_r_BC, R_BC);
   record::event_camera_->setCp(0.1);
   record::event_camera_->setCm(0.1);
