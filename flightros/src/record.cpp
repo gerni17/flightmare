@@ -354,7 +354,7 @@ int main(int argc, char* argv[]) {
   way_points_.push_back(Eigen::Vector3d(-1, -16, 2.5));
   way_points_.push_back(Eigen::Vector3d(-1, -8, 2.5));
   way_points_.push_back(Eigen::Vector3d(-1, 0, 2.5));
-  way_points_.push_back(Eigen::Vector3d(0, 2, 2.5));
+  way_points_.push_back(Eigen::Vector3d(-1, 2, 2.5));
 
 
   polynomial_trajectories::PolynomialTrajectory trajectory_ =
