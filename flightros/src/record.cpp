@@ -140,7 +140,6 @@ polynomial_trajectories::PolynomialTrajectory record::createOwnSnap(
   Eigen::VectorXd segment_times_in(waypoints_in.size() - 1);
   segment_times_in << 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0,
     100.0, 100.0, 100.0,100.0;
-
   double desired_speed_in = 1.0;
   for (int i = 0; i < waypoints_in.size() - 1; i++) {
     segment_times_in[i] =
@@ -290,29 +289,29 @@ int main(int argc, char* argv[]) {
 
   // // // first trajectory of japan
 
-  // //   way_points.push_back(Eigen::Vector3d(0, -58, 2.5));
-  // //   // way_points.push_back(Eigen::Vector3d(0, -55, 2.5));
-  // //   // way_points.push_back(Eigen::Vector3d(-2, -12, 2.5));
-  // //   // way_points.push_back(Eigen::Vector3d(-14, -10, 2.5));
-  // //   // way_points.push_back(Eigen::Vector3d(-16, -13, 2.5));
-  // //   // way_points.push_back(Eigen::Vector3d(-14, -14, 2.5));
-  // //   // way_points.push_back(Eigen::Vector3d(-2, -13, 2.5));
-  // //   // way_points.push_back(Eigen::Vector3d(0, -1, 2.5));
-  // //   // way_points.push_back(Eigen::Vector3d(0, 80, 2.5));
+    way_points.push_back(Eigen::Vector3d(0, -58, 2.5));
+    way_points.push_back(Eigen::Vector3d(0, -55, 2.5));
+    way_points.push_back(Eigen::Vector3d(-2, -12, 2.5));
+    way_points.push_back(Eigen::Vector3d(-14, -10, 2.5));
+    way_points.push_back(Eigen::Vector3d(-16, -13, 2.5));
+    way_points.push_back(Eigen::Vector3d(-14, -14, 2.5));
+    way_points.push_back(Eigen::Vector3d(-2, -13, 2.5));
+    way_points.push_back(Eigen::Vector3d(0, -1, 2.5));
+    way_points.push_back(Eigen::Vector3d(0, 80, 2.5));
 
   // //   // trjectory of japan
-  // //   // way_points.push_back(Eigen::Vector3d(1, 0, 2.5));
-  // //   // way_points.push_back(Eigen::Vector3d(-1, -11, 2.5));
-  // //   // way_points.push_back(Eigen::Vector3d(-5, -12, 2.5));
-  // //   // way_points.push_back(Eigen::Vector3d(-8, -13, 2.5));
-  // //   // way_points.push_back(Eigen::Vector3d(-10, -12, 2.5));
-  // //   // way_points.push_back(Eigen::Vector3d(-8, -11, 2.5));
-  // //   // way_points.push_back(Eigen::Vector3d(0, -14, 2.5));
-  // //   // way_points.push_back(Eigen::Vector3d(1, -16, 2.5));
-  // //   // way_points.push_back(Eigen::Vector3d(0, -18, 2.5));
-  // //   // way_points.push_back(Eigen::Vector3d(-1, -16, 2.5));
-  // //   // way_points.push_back(Eigen::Vector3d(-1, 0, 2.5));
-  // //   // way_points.push_back(Eigen::Vector3d(0, 2, 2.5));
+  // //   // way_points_.push_back(Eigen::Vector3d(1, 0, 2.5));
+  // //   // way_points_.push_back(Eigen::Vector3d(-1, -11, 2.5));
+  // //   // way_points_.push_back(Eigen::Vector3d(-5, -12, 2.5));
+  // //   // way_points_.push_back(Eigen::Vector3d(-8, -13, 2.5));
+  // //   // way_points_.push_back(Eigen::Vector3d(-10, -12, 2.5));
+  // //   // way_points_.push_back(Eigen::Vector3d(-8, -11, 2.5));
+  // //   // way_points_.push_back(Eigen::Vector3d(0, -14, 2.5));
+  // //   // way_points_.push_back(Eigen::Vector3d(1, -16, 2.5));
+  // //   // way_points_.push_back(Eigen::Vector3d(0, -18, 2.5));
+  // //   // way_points_.push_back(Eigen::Vector3d(-1, -16, 2.5));
+  // //   // way_points_.push_back(Eigen::Vector3d(-1, 0, 2.5));
+  // //   // way_points_.push_back(Eigen::Vector3d(0, 2, 2.5));
 
   // //   // selims example
   // //   // way_points.push_back(Eigen::Vector3d(-10.0, 0.0, 4.0));  //
@@ -333,7 +332,17 @@ int main(int argc, char* argv[]) {
   // way_points_.push_back(Eigen::Vector3d(2.0, 2.0, 2.5));
   // way_points_.push_back(Eigen::Vector3d(4.0, 0.0, 2.5));
 
-  way_points_.push_back(Eigen::Vector3d(1, 0, 2.5));
+    // way_points_.push_back(Eigen::Vector3d(0, -58, 2.5));
+    // way_points_.push_back(Eigen::Vector3d(0, -55, 2.5));
+    // way_points_.push_back(Eigen::Vector3d(-2, -12, 2.5));
+    // way_points_.push_back(Eigen::Vector3d(-14, -10, 2.5));
+    // way_points_.push_back(Eigen::Vector3d(-16, -13, 2.5));
+    // way_points_.push_back(Eigen::Vector3d(-14, -14, 2.5));
+    // way_points_.push_back(Eigen::Vector3d(-2, -13, 2.5));
+    // way_points_.push_back(Eigen::Vector3d(0, -1, 2.5));
+    // way_points_.push_back(Eigen::Vector3d(0, 80, 2.5));
+
+      way_points_.push_back(Eigen::Vector3d(1, 0, 2.5));
   way_points_.push_back(Eigen::Vector3d(-1, -11, 2.5));
   way_points_.push_back(Eigen::Vector3d(-5, -12, 2.5));
   way_points_.push_back(Eigen::Vector3d(-8, -13, 2.5));
