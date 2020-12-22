@@ -21,7 +21,14 @@ void imageToMsg(const cv::Mat& image, int64_t t, sensor_msgs::ImagePtr& msg) {
   cv_image.header.stamp = toRosTime(t);
   msg = cv_image.toImageMsg();
 }
-
+void imageFloatToMsg(const cv::Mat& image, int64_t t, sensor_msgs::ImagePtr& msg) {
+  cv_bridge::CvImage cv_image;
+  // image.convertTo(cv_image.image, CV_8UC3, 255.0);
+  cv_image.image = image;
+  cv_image.encoding = "32FC1";
+  cv_image.header.stamp = toRosTime(t);
+  msg = cv_image.toImageMsg();
+}
 
 void eventsToMsg(const EventsVector& events, int width, int height,
                  dvs_msgs::EventArrayPtr& msg, int64_t starting_time) {

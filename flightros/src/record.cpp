@@ -443,8 +443,8 @@ int main(int argc, char* argv[]) {
     record::rgb_camera_->getDepthMap(depth_image);
 
     sensor_msgs::ImagePtr rgb_msg =
-      cv_bridge::CvImage(std_msgs::Header(), "bgr8", depth_image).toImageMsg();
-    record::rgb_pub_.publish(rgb_msg);
+      cv_bridge::CvImage(std_msgs::Header(), "32FC1", depth_image).toImageMsg();
+          record::rgb_pub_.publish(rgb_msg);
 
     RGBImagePtr rgb_img_ptr = std::make_shared<RGBImage>(ev_image);
     RGBImagePtr of_img_ptr = std::make_shared<RGBImage>(of_image);

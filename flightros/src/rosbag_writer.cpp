@@ -170,7 +170,7 @@ void RosbagWriter::imageDepthCallback(const RGBImagePtr& image, int64_t t)
     if(image)
     {
       sensor_msgs::ImagePtr msg;
-      imageToMsg(*image, t+starting_time, msg);
+      imageFloatToMsg(*image, t+starting_time, msg);
       bag_.write(getTopicName(topic_name_prefix_, 0, "image_depth"),
                  msg->header.stamp, msg);
     }

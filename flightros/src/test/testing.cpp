@@ -262,7 +262,7 @@ ROS_INFO_STREAM("time ") ;
     testing::of_pub_.publish(of_msg);
     bool was_depth_empty = testing::rgb_camera_->getDepthMap(depth_img);
     sensor_msgs::ImagePtr depth_msg =
-      cv_bridge::CvImage(std_msgs::Header(), "mono8", depth_img).toImageMsg();
+      cv_bridge::CvImage(std_msgs::Header(), "32FC1", depth_img).toImageMsg();
     testing::depth_pub_.publish(depth_msg);
     ROS_INFO_STREAM("recieved of and dept " << was_of_empty << " / "
                                             << was_depth_empty);
