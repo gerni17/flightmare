@@ -133,19 +133,19 @@ void record::createMinSnap(const std::vector<Eigen::Vector3d> waypoints,
 }
 
 polynomial_trajectories::PolynomialTrajectory record::createOwnSnap(
-  const std::vector<Eigen::Vector3d> waypoints_in) {
+  const std::vector<Eigen::Vector3d> waypoints_in,Eigen::VectorXd segment_times_in) {
   // identify the segment times
   // Eigen::VectorXd segment_times_in =
   // Eigen::VectorXd::Ones(waypoints_in.size() - 1);
-  Eigen::VectorXd segment_times_in(waypoints_in.size() - 1);
-  segment_times_in << 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0,
-    100.0, 100.0, 100.0,100.0;
-  double desired_speed_in = 1.0;
-  for (int i = 0; i < waypoints_in.size() - 1; i++) {
-    segment_times_in[i] =
-      (waypoints_in.at(i + 1) - waypoints_in.at(i)).norm() / desired_speed_in;
-    ROS_INFO_STREAM("seg time" << segment_times_in[i]);
-  }
+  // Eigen::VectorXd segment_times_in(waypoints_in.size() - 1);
+  // segment_times_in << 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0,
+  //   100.0, 100.0, 100.0, 100.0;
+  // double desired_speed_in = 1.0;
+  // for (int i = 0; i < waypoints_in.size() - 1; i++) {
+  //   segment_times_in[i] =
+  //     (waypoints_in.at(i + 1) - waypoints_in.at(i)).norm() / desired_speed_in;
+  //   ROS_INFO_STREAM("seg time: " << segment_times_in[i]);
+  // }
   Eigen::VectorXd minimization_weights_in(4);
   //  minimization_weights << 0.1, 10.0, 100.0, 100.0;
   minimization_weights_in << 0.0, 0.0, 0.0, 100.0;
@@ -179,6 +179,7 @@ polynomial_trajectories::PolynomialTrajectory record::createOwnSnap(
       generateMinimumSnapTrajectory(
         segment_times_in, start_state_in, end_state_in, trajectory_settings_in,
         max_velocity_in, max_collective_thrust_in, max_roll_pitch_rate_in);
+
   return trajectory_in;
 }
 
@@ -194,6 +195,9 @@ void record::saveToFile(std::vector<Event_t> events) {
   }
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
 int main(int argc, char* argv[]) {
   // initialize ROS
   ros::init(argc, argv, "flightmare_gates");
@@ -203,20 +207,49 @@ int main(int argc, char* argv[]) {
 
   ros::Rate(50.0);
 
+  // Settings
+  bool rotate = false;
+  bool trajectory_rotation = false;
+  bool position_trajectory = true;
+  bool ring_traj=false;
+  int scene;
+  std::string which_trajectory;
+    pnh.getParam("/rosbag/rotate",rotate);
+    pnh.getParam("/rosbag/trajectory_rotation",trajectory_rotation);
+    pnh.getParam("/rosbag/position_trajectory",position_trajectory);    
+    pnh.getParam("/rosbag/path",record::path_to_output_bag);
+    pnh.getParam("/rosbag/ring_traj",ring_traj);
+    pnh.getParam("/rosbag/scene_id",  scene);
+    pnh.getParam("/rosbag/trajectory", which_trajectory);
+record::scene_id_=scene;
+
   // quad initialization
   record::quad_ptr_ = std::make_unique<Quadrotor>();
   // add camera
   record::rgb_camera_ = std::make_unique<RGBCamera>();
   record::event_camera_ = std::make_unique<EventCamera>();
 
-  record::scene_id_ = 4;
   record::rgb_pub_ = my_image_transport.advertise("camera/rgb", 1);
   ros::Publisher trajectory_pub_ =
     nh.advertise<quadrotor_msgs::Trajectory>("autopilot/trajectory", 1);
   ros::Publisher traj_pub_ = nh.advertise<nav_msgs::Path>("path/trajectory", 1);
   ros::Publisher line_pub_ = nh.advertise<nav_msgs::Path>("path/straight", 1);
-  ros::Publisher own_traj_pub_ =
-    nh.advertise<nav_msgs::Path>("path2/trajectory", 1);
+
+
+  std::vector<float> position_vec;
+  std::vector<float> orientation_vec;
+  std::vector<float> waypts_x;
+    std::vector<float> waypts_y;
+  std::vector<float> waypts_z;
+
+  pnh.getParam("/record/single_position", position_vec);
+  pnh.getParam("/record/single_orientation", orientation_vec);
+  pnh.getParam(which_trajectory+"/x", waypts_x);
+  pnh.getParam(which_trajectory+"/y", waypts_y);
+  pnh.getParam(which_trajectory+"/z", waypts_z);
+  
+  // ROS_WARNING_STREAM("numbr of waypoints: "<<waypts_z.size());
+  ROS_INFO_STREAM("writing to rosbag: "<<record::path_to_output_bag);
 
 
   int frame = 0;
@@ -262,9 +295,17 @@ int main(int argc, char* argv[]) {
 
   // connect unity
   record::connectUnity();
-
-  // //   // Define path through gates
   std::vector<Eigen::Vector3d> way_points;
+
+  Eigen::VectorXd seg_times(waypts_x.size() - 1);
+
+    quadrotor_common::Trajectory sampled_trajectory_;
+
+    
+
+if(ring_traj){
+  ROS_WARN_STREAM("Creating RING trajectory");
+  // //   // Define path through gates
   way_points.push_back(Eigen::Vector3d(0, 10, 2.5));
   way_points.push_back(Eigen::Vector3d(5, 0, 2.5));
   way_points.push_back(Eigen::Vector3d(0, -10, 2.5));
@@ -286,91 +327,24 @@ int main(int argc, char* argv[]) {
     polynomial_trajectories::minimum_snap_trajectories::
       generateMinimumSnapRingTrajectory(segment_times, trajectory_settings,
                                         20.0, 20.0, 6.0);
+}
+else{
 
-  // // // first trajectory of japan
+  for (int it =0; it<waypts_x.size();it++) {
+    way_points.push_back(Eigen::Vector3d(waypts_x.at(it),waypts_y.at(it),waypts_z.at(it)));
+  }  
+  for (int it =0; it<waypts_x.size()-1;it++) {
+    seg_times[it] = 10.0;
+  }
 
-    way_points.push_back(Eigen::Vector3d(0, -58, 2.5));
-    way_points.push_back(Eigen::Vector3d(0, -55, 2.5));
-    way_points.push_back(Eigen::Vector3d(-2, -12, 2.5));
-    way_points.push_back(Eigen::Vector3d(-14, -10, 2.5));
-    way_points.push_back(Eigen::Vector3d(-16, -13, 2.5));
-    way_points.push_back(Eigen::Vector3d(-14, -14, 2.5));
-    way_points.push_back(Eigen::Vector3d(-2, -13, 2.5));
-    way_points.push_back(Eigen::Vector3d(0, -1, 2.5));
-    way_points.push_back(Eigen::Vector3d(0, 80, 2.5));
+}
+  polynomial_trajectories::PolynomialTrajectory   trajectory_ =
+    record::createOwnSnap(way_points,seg_times);
 
-  // //   // trjectory of japan
-  // //   // way_points_.push_back(Eigen::Vector3d(1, 0, 2.5));
-  // //   // way_points_.push_back(Eigen::Vector3d(-1, -11, 2.5));
-  // //   // way_points_.push_back(Eigen::Vector3d(-5, -12, 2.5));
-  // //   // way_points_.push_back(Eigen::Vector3d(-8, -13, 2.5));
-  // //   // way_points_.push_back(Eigen::Vector3d(-10, -12, 2.5));
-  // //   // way_points_.push_back(Eigen::Vector3d(-8, -11, 2.5));
-  // //   // way_points_.push_back(Eigen::Vector3d(0, -14, 2.5));
-  // //   // way_points_.push_back(Eigen::Vector3d(1, -16, 2.5));
-  // //   // way_points_.push_back(Eigen::Vector3d(0, -18, 2.5));
-  // //   // way_points_.push_back(Eigen::Vector3d(-1, -16, 2.5));
-  // //   // way_points_.push_back(Eigen::Vector3d(-1, 0, 2.5));
-  // //   // way_points_.push_back(Eigen::Vector3d(0, 2, 2.5));
-
-  // //   // selims example
-  // //   // way_points.push_back(Eigen::Vector3d(-10.0, 0.0, 4.0));  //
-  // initiale position
-  // //   // way_points.push_back(Eigen::Vector3d(0, 30, 7));
-  // //   // way_points.push_back(Eigen::Vector3d(10, 0, 5));
-  // //   // way_points.push_back(Eigen::Vector3d(0, -25, 10));
-  // //   // way_points.push_back(Eigen::Vector3d(-5, 0, 7));
-  // //   // way_points.push_back(Eigen::Vector3d(0, 15, 5));
-  // //   // way_points.push_back(Eigen::Vector3d(5, 0, 7));
-  // //   // way_points.push_back(Eigen::Vector3d(0, -10, 5));
-
-  //////////////////////////////////////////////////////////
-  // Completely done with own function
-  std::vector<Eigen::Vector3d> way_points_;
-  // way_points_.push_back(Eigen::Vector3d(0.0, 0.0, 0.0));
-  // way_points_.push_back(Eigen::Vector3d(0.0, 0.0, 2.5));
-  // way_points_.push_back(Eigen::Vector3d(2.0, 2.0, 2.5));
-  // way_points_.push_back(Eigen::Vector3d(4.0, 0.0, 2.5));
-
-    // way_points_.push_back(Eigen::Vector3d(0, -58, 2.5));
-    // way_points_.push_back(Eigen::Vector3d(0, -55, 2.5));
-    // way_points_.push_back(Eigen::Vector3d(-2, -12, 2.5));
-    // way_points_.push_back(Eigen::Vector3d(-14, -10, 2.5));
-    // way_points_.push_back(Eigen::Vector3d(-16, -13, 2.5));
-    // way_points_.push_back(Eigen::Vector3d(-14, -14, 2.5));
-    // way_points_.push_back(Eigen::Vector3d(-2, -13, 2.5));
-    // way_points_.push_back(Eigen::Vector3d(0, -1, 2.5));
-    // way_points_.push_back(Eigen::Vector3d(0, 80, 2.5));
-
-      way_points_.push_back(Eigen::Vector3d(1, 0, 2.5));
-  way_points_.push_back(Eigen::Vector3d(-1, -11, 2.5));
-  way_points_.push_back(Eigen::Vector3d(-5, -12, 2.5));
-  way_points_.push_back(Eigen::Vector3d(-8, -13, 2.5));
-  way_points_.push_back(Eigen::Vector3d(-10, -12, 2.5));
-  way_points_.push_back(Eigen::Vector3d(-8, -11, 2.5));
-  way_points_.push_back(Eigen::Vector3d(0, -14, 2.5));
-  way_points_.push_back(Eigen::Vector3d(1, -16, 2.5));
-  way_points_.push_back(Eigen::Vector3d(0, -18, 2.5));
-  way_points_.push_back(Eigen::Vector3d(-1, -16, 2.5));
-  way_points_.push_back(Eigen::Vector3d(-1, -8, 2.5));
-  way_points_.push_back(Eigen::Vector3d(-1, 0, 2.5));
-  way_points_.push_back(Eigen::Vector3d(-1, 2, 2.5));
-
-
-  polynomial_trajectories::PolynomialTrajectory trajectory_ =
-    record::createOwnSnap(way_points_);
-  quadrotor_common::Trajectory sampled_trajectory_;
-
-  record::samplePolynomial(sampled_trajectory_, trajectory_, 10.0);
-
-
-  // // quadrotor_common::Trajectory sampled_trajectory_;
-  // // record::createMinSnap(way_points_, &sampled_trajectory_);
-
+      record::samplePolynomial(sampled_trajectory_, trajectory_, 10.0);
 
   nav_msgs::Path path;
   path.header.frame_id = "/map";
-  int it = 0;
   for (auto pt : sampled_trajectory_.points) {
     geometry_msgs::PoseStamped pose;
     pose.header.frame_id = "/map";
@@ -378,21 +352,14 @@ int main(int argc, char* argv[]) {
     pose.pose.position.y = pt.position[1];
     pose.pose.position.z = pt.position[2];
     path.poses.push_back(pose);
-    ROS_INFO_STREAM(it);
-    ROS_INFO_STREAM("pt   " << pt.position[2] << "/" << pt.position[1] << "/"
-                            << pt.position[0]);
-    ROS_INFO_STREAM("pose " << pose.pose.position.x << "/"
-                            << pose.pose.position.y << "/"
-                            << pose.pose.position.z);
-    it++;
-  }
-  ////////////////////////////////////////////////////////////
-  // Desired path in lines
+    ROS_INFO_STREAM("pt   " << pt.position[0] << "/" << pt.position[1] << "/"
+                            << pt.position[2]);}
 
+  // Desired path in lines
   nav_msgs::Path desired_path;
   desired_path.header.frame_id = "/map";
 
-  for (auto pt : way_points_) {
+  for (auto pt : way_points) {
     geometry_msgs::PoseStamped pose;
     pose.header.frame_id = "/map";
     pose.pose.position.x = pt[0];
@@ -404,27 +371,46 @@ int main(int argc, char* argv[]) {
 
   cv::Mat new_image, of_image, depth_image, ev_image;
   Image I;
-  ROS_INFO_STREAM("Cp value " << cp);
+  ROS_INFO_STREAM("C values " << cp<<"/"<<cm);
+
+ROS_INFO_STREAM("==========================================================================");
 
   while (ros::ok() && record::unity_render_ && record::unity_ready_) {
     quadrotor_common::TrajectoryPoint desired_pose =
       polynomial_trajectories::getPointFromTrajectory(
         trajectory_, ros::Duration(record::event_camera_->getSecSimTime()));
 
-    record::quad_state_.x[QS::POSX] = (Scalar)desired_pose.position.x();
-    record::quad_state_.x[QS::POSY] = (Scalar)desired_pose.position.y();
-    record::quad_state_.x[QS::POSZ] = (Scalar)desired_pose.position.z();
-    // record::quad_state_.x[QS::ATTW] = (Scalar)desired_pose.orientation.w();
-    // record::quad_state_.x[QS::ATTX] = (Scalar)desired_pose.orientation.x();
-    // record::quad_state_.x[QS::ATTY] = (Scalar)desired_pose.orientation.y();
-    // record::quad_state_.x[QS::ATTZ] = (Scalar)desired_pose.orientation.z();
-    record::quad_state_.x[QS::ATTW] = 1.0;
-    record::quad_state_.x[QS::ATTX] = 0.0;
-    record::quad_state_.x[QS::ATTY] = 0.0;
-    record::quad_state_.x[QS::ATTZ] = 0.0;
+    if (position_trajectory) {
+      record::quad_state_.x[QS::POSX] = (Scalar)desired_pose.position.x();
+      record::quad_state_.x[QS::POSY] = (Scalar)desired_pose.position.y();
+      record::quad_state_.x[QS::POSZ] = (Scalar)desired_pose.position.z();
+
+    }
+
+    else {
+      record::quad_state_.x[QS::POSX] = position_vec.at(0);
+      record::quad_state_.x[QS::POSY] = position_vec.at(1);
+      record::quad_state_.x[QS::POSZ] = position_vec.at(2);
+    }
+    if (trajectory_rotation) {
+      record::quad_state_.x[QS::ATTW] = (Scalar)desired_pose.orientation.w();
+      record::quad_state_.x[QS::ATTX] = (Scalar)desired_pose.orientation.x();
+      record::quad_state_.x[QS::ATTY] = (Scalar)desired_pose.orientation.y();
+      record::quad_state_.x[QS::ATTZ] = (Scalar)desired_pose.orientation.z();
+    } else if (rotate) {
+      record::quad_state_.x[QS::ATTW] = 1.0;
+      record::quad_state_.x[QS::ATTX] = 0.0;
+      record::quad_state_.x[QS::ATTY] = 0.0;
+      record::quad_state_.x[QS::ATTZ] = 0.0;
+    } else {
+      record::quad_state_.x[QS::ATTW] = 1.0;
+      record::quad_state_.x[QS::ATTX] = 0.0;
+      record::quad_state_.x[QS::ATTY] = 0.0;
+      record::quad_state_.x[QS::ATTZ] = 0.0;
+    }
+
     traj_pub_.publish(path);
     line_pub_.publish(desired_path);
-    // own_traj_pub_.publish(path2);
 
 
     ze::Transformation twc;
@@ -458,11 +444,6 @@ int main(int argc, char* argv[]) {
       cv_bridge::CvImage(std_msgs::Header(), "bgr8", depth_image).toImageMsg();
     record::rgb_pub_.publish(rgb_msg);
 
-    // cv::cvtColor(new_image, new_image, CV_BGR2GRAY);
-
-    // new_image.convertTo(I, cv::DataType<ImageFloatType>::type, 1. / 255.);
-
-    // auto img_ptr = std::make_shared<Image>(I);
     RGBImagePtr rgb_img_ptr = std::make_shared<RGBImage>(ev_image);
     RGBImagePtr of_img_ptr = std::make_shared<RGBImage>(of_image);
     RGBImagePtr depth_img_ptr = std::make_shared<RGBImage>(depth_image);
@@ -486,8 +467,6 @@ int main(int argc, char* argv[]) {
           depth_img_ptr, record::event_camera_->getNanoSimTime());
         record::writer_->imageEventCallback(
           event_img_ptr, record::event_camera_->getNanoSimTime());
-
-        ROS_INFO_STREAM("image");
       }
 
       const EventsVector& events = record::event_camera_->getEvents();
@@ -496,8 +475,6 @@ int main(int argc, char* argv[]) {
     }
     // clear the buffer
     record::event_camera_->deleteEventQueue();
-
-
     frame++;
   }
   record::events_text_file_.close();

@@ -74,7 +74,7 @@ void saveToFile(std::vector<Event_t>);
 
 void createMinSnap(const std::vector<Eigen::Vector3d> waypoints,
                    quadrotor_common::Trajectory* trajectory);
-polynomial_trajectories::PolynomialTrajectory createOwnSnap( const std::vector<Eigen::Vector3d> waypoints_in);
+polynomial_trajectories::PolynomialTrajectory createOwnSnap( const std::vector<Eigen::Vector3d> waypoints_in,Eigen::VectorXd segment_times_in);
 
 void samplePolynomial(
   quadrotor_common::Trajectory& trajectory,
@@ -102,8 +102,8 @@ int count_;
 // std::vector<ze::real_t> values, amount;
 std::vector<float> errors;
 int num_cam = 1;
-const std::string path_to_output_bag= "/data/scratch/gian/record.bag";
-// const std::string path_to_output_bag = "/home/gian/bags_flkightmare/record.bag";
+// const std::string path_to_output_bag= "/data/scratch/gian/record.bag";
+std::string path_to_output_bag = "/home/gian/bags_flightmare/record.bag";
 
 std::shared_ptr<RosbagWriter> writer_;
 }  // namespace record
