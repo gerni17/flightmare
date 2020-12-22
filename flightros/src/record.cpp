@@ -133,7 +133,8 @@ void record::createMinSnap(const std::vector<Eigen::Vector3d> waypoints,
 }
 
 polynomial_trajectories::PolynomialTrajectory record::createOwnSnap(
-  const std::vector<Eigen::Vector3d> waypoints_in,Eigen::VectorXd segment_times_in) {
+  const std::vector<Eigen::Vector3d> waypoints_in,
+  Eigen::VectorXd segment_times_in) {
   // identify the segment times
   // Eigen::VectorXd segment_times_in =
   // Eigen::VectorXd::Ones(waypoints_in.size() - 1);
@@ -143,7 +144,8 @@ polynomial_trajectories::PolynomialTrajectory record::createOwnSnap(
   // double desired_speed_in = 1.0;
   // for (int i = 0; i < waypoints_in.size() - 1; i++) {
   //   segment_times_in[i] =
-  //     (waypoints_in.at(i + 1) - waypoints_in.at(i)).norm() / desired_speed_in;
+  //     (waypoints_in.at(i + 1) - waypoints_in.at(i)).norm() /
+  //     desired_speed_in;
   //   ROS_INFO_STREAM("seg time: " << segment_times_in[i]);
   // }
   Eigen::VectorXd minimization_weights_in(4);
@@ -211,17 +213,17 @@ int main(int argc, char* argv[]) {
   bool rotate = false;
   bool trajectory_rotation = false;
   bool position_trajectory = true;
-  bool ring_traj=false;
+  bool ring_traj = false;
   int scene;
   std::string which_trajectory;
-    pnh.getParam("/rosbag/rotate",rotate);
-    pnh.getParam("/rosbag/trajectory_rotation",trajectory_rotation);
-    pnh.getParam("/rosbag/position_trajectory",position_trajectory);    
-    pnh.getParam("/rosbag/path",record::path_to_output_bag);
-    pnh.getParam("/rosbag/ring_traj",ring_traj);
-    pnh.getParam("/rosbag/scene_id",  scene);
-    pnh.getParam("/rosbag/trajectory", which_trajectory);
-record::scene_id_=scene;
+  pnh.getParam("/rosbag/rotate", rotate);
+  pnh.getParam("/rosbag/trajectory_rotation", trajectory_rotation);
+  pnh.getParam("/rosbag/position_trajectory", position_trajectory);
+  pnh.getParam("/rosbag/path", record::path_to_output_bag);
+  pnh.getParam("/rosbag/ring_traj", ring_traj);
+  pnh.getParam("/rosbag/scene_id", scene);
+  pnh.getParam("/rosbag/trajectory", which_trajectory);
+  record::scene_id_ = scene;
 
   // quad initialization
   record::quad_ptr_ = std::make_unique<Quadrotor>();
@@ -239,17 +241,17 @@ record::scene_id_=scene;
   std::vector<float> position_vec;
   std::vector<float> orientation_vec;
   std::vector<float> waypts_x;
-    std::vector<float> waypts_y;
+  std::vector<float> waypts_y;
   std::vector<float> waypts_z;
 
   pnh.getParam("/record/single_position", position_vec);
   pnh.getParam("/record/single_orientation", orientation_vec);
-  pnh.getParam(which_trajectory+"/x", waypts_x);
-  pnh.getParam(which_trajectory+"/y", waypts_y);
-  pnh.getParam(which_trajectory+"/z", waypts_z);
-  
+  pnh.getParam(which_trajectory + "/x", waypts_x);
+  pnh.getParam(which_trajectory + "/y", waypts_y);
+  pnh.getParam(which_trajectory + "/z", waypts_z);
+
   // ROS_WARNING_STREAM("numbr of waypoints: "<<waypts_z.size());
-  ROS_INFO_STREAM("writing to rosbag: "<<record::path_to_output_bag);
+  ROS_INFO_STREAM("writing to rosbag: " << record::path_to_output_bag);
 
 
   int frame = 0;
@@ -299,49 +301,46 @@ record::scene_id_=scene;
 
   Eigen::VectorXd seg_times(waypts_x.size() - 1);
 
-    quadrotor_common::Trajectory sampled_trajectory_;
+  quadrotor_common::Trajectory sampled_trajectory_;
 
-    
 
-if(ring_traj){
-  ROS_WARN_STREAM("Creating RING trajectory");
-  // //   // Define path through gates
-  way_points.push_back(Eigen::Vector3d(0, 10, 2.5));
-  way_points.push_back(Eigen::Vector3d(5, 0, 2.5));
-  way_points.push_back(Eigen::Vector3d(0, -10, 2.5));
-  way_points.push_back(Eigen::Vector3d(-5, 0, 2.5));
-  way_points.push_back(Eigen::Vector3d(-7, 10, 2.5));
-  way_points.push_back(Eigen::Vector3d(-5, 20, 2.5));
+  if (ring_traj) {
+    ROS_WARN_STREAM("Creating RING trajectory");
+    // //   // Define path through gates
+    way_points.push_back(Eigen::Vector3d(0, 10, 2.5));
+    way_points.push_back(Eigen::Vector3d(5, 0, 2.5));
+    way_points.push_back(Eigen::Vector3d(0, -10, 2.5));
+    way_points.push_back(Eigen::Vector3d(-5, 0, 2.5));
+    way_points.push_back(Eigen::Vector3d(-7, 10, 2.5));
+    way_points.push_back(Eigen::Vector3d(-5, 20, 2.5));
 
-  std::size_t num_waypoints = way_points.size();
-  Eigen::VectorXd segment_times(num_waypoints);
-  segment_times << 50.0, 50.0, 50.0, 50.0, 50.0, 50.0;
-  Eigen::VectorXd minimization_weights(num_waypoints);
-  minimization_weights << 0.0, 0.0, 0.0, 1.0;
+    std::size_t num_waypoints = way_points.size();
+    Eigen::VectorXd segment_times(num_waypoints);
+    segment_times << 50.0, 50.0, 50.0, 50.0, 50.0, 50.0;
+    Eigen::VectorXd minimization_weights(num_waypoints);
+    minimization_weights << 0.0, 0.0, 0.0, 1.0;
 
-  polynomial_trajectories::PolynomialTrajectorySettings trajectory_settings =
-    polynomial_trajectories::PolynomialTrajectorySettings(
-      way_points, minimization_weights, 7, 4);
+    polynomial_trajectories::PolynomialTrajectorySettings trajectory_settings =
+      polynomial_trajectories::PolynomialTrajectorySettings(
+        way_points, minimization_weights, 7, 4);
 
-  polynomial_trajectories::PolynomialTrajectory trajectory =
-    polynomial_trajectories::minimum_snap_trajectories::
-      generateMinimumSnapRingTrajectory(segment_times, trajectory_settings,
-                                        20.0, 20.0, 6.0);
-}
-else{
-
-  for (int it =0; it<waypts_x.size();it++) {
-    way_points.push_back(Eigen::Vector3d(waypts_x.at(it),waypts_y.at(it),waypts_z.at(it)));
-  }  
-  for (int it =0; it<waypts_x.size()-1;it++) {
-    seg_times[it] = 10.0;
+    polynomial_trajectories::PolynomialTrajectory trajectory =
+      polynomial_trajectories::minimum_snap_trajectories::
+        generateMinimumSnapRingTrajectory(segment_times, trajectory_settings,
+                                          20.0, 20.0, 6.0);
+  } else {
+    for (int it = 0; it < waypts_x.size(); it++) {
+      way_points.push_back(
+        Eigen::Vector3d(waypts_x.at(it), waypts_y.at(it), waypts_z.at(it)));
+    }
+    for (int it = 0; it < waypts_x.size() - 1; it++) {
+      seg_times[it] = 10.0;
+    }
   }
+  polynomial_trajectories::PolynomialTrajectory trajectory_ =
+    record::createOwnSnap(way_points, seg_times);
 
-}
-  polynomial_trajectories::PolynomialTrajectory   trajectory_ =
-    record::createOwnSnap(way_points,seg_times);
-
-      record::samplePolynomial(sampled_trajectory_, trajectory_, 10.0);
+  record::samplePolynomial(sampled_trajectory_, trajectory_, 10.0);
 
   nav_msgs::Path path;
   path.header.frame_id = "/map";
@@ -353,7 +352,8 @@ else{
     pose.pose.position.z = pt.position[2];
     path.poses.push_back(pose);
     ROS_INFO_STREAM("pt   " << pt.position[0] << "/" << pt.position[1] << "/"
-                            << pt.position[2]);}
+                            << pt.position[2]);
+  }
 
   // Desired path in lines
   nav_msgs::Path desired_path;
@@ -371,9 +371,11 @@ else{
 
   cv::Mat new_image, of_image, depth_image, ev_image;
   Image I;
-  ROS_INFO_STREAM("C values " << cp<<"/"<<cm);
+  ROS_INFO_STREAM("C values " << cp << "/" << cm);
 
-ROS_INFO_STREAM("==========================================================================");
+  ROS_INFO_STREAM(
+    "========================================================================="
+    "=");
 
   while (ros::ok() && record::unity_render_ && record::unity_ready_) {
     quadrotor_common::TrajectoryPoint desired_pose =
