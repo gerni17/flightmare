@@ -427,14 +427,14 @@ int main(int argc, char* argv[]) {
       record::quad_state_.x[QS::ATTW], record::quad_state_.x[QS::ATTX],
       record::quad_state_.x[QS::ATTY], record::quad_state_.x[QS::ATTZ]);
 
-    twc.getPosition() = ze::Position((Scalar)desired_pose.position.x(),
-                                     (Scalar)desired_pose.position.y(),
-                                     (Scalar)desired_pose.position.z());
+    twc.getPosition() = ze::Position(record::quad_state_.x[QS::POSX],
+                                     record::quad_state_.x[QS::POSY],
+                                     record::quad_state_.x[QS::POSZ]);
     record::writer_->poseCallback(twc, record::event_camera_->getNanoSimTime());
 
-    ROS_INFO_STREAM("pose " << (Scalar)desired_pose.position.x() << "/"
-                            << (Scalar)desired_pose.position.y() << "/"
-                            << (Scalar)desired_pose.position.z() << "/"
+    ROS_INFO_STREAM("pose " << record::quad_state_.x[QS::POSX] << "/"
+                            << record::quad_state_.x[QS::POSY] << "/"
+                            << record::quad_state_.x[QS::POSZ] << "/"
                             << record::event_camera_->getSecSimTime());
 
     record::quad_ptr_->setState(record::quad_state_);
