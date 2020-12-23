@@ -141,13 +141,13 @@ polynomial_trajectories::PolynomialTrajectory record::createOwnSnap(
   // Eigen::VectorXd segment_times_in(waypoints_in.size() - 1);
   // segment_times_in << 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0,
   //   100.0, 100.0, 100.0, 100.0;
-  // double desired_speed_in = 1.0;
-  // for (int i = 0; i < waypoints_in.size() - 1; i++) {
-  //   segment_times_in[i] =
-  //     (waypoints_in.at(i + 1) - waypoints_in.at(i)).norm() /
-  //     desired_speed_in;
-  //   ROS_INFO_STREAM("seg time: " << segment_times_in[i]);
-  // }
+  double desired_speed_in = 1.0;
+  for (int i = 0; i < waypoints_in.size() - 1; i++) {
+    segment_times_in[i] =
+      (waypoints_in.at(i + 1) - waypoints_in.at(i)).norm() /
+      desired_speed_in;
+    ROS_INFO_STREAM("seg time: " << segment_times_in[i]);
+  }
   Eigen::VectorXd minimization_weights_in(4);
   //  minimization_weights << 0.1, 10.0, 100.0, 100.0;
   minimization_weights_in << 0.0, 0.0, 0.0, 100.0;
@@ -293,7 +293,6 @@ int main(int argc, char* argv[]) {
 
   // Set unity bridge
   record::setUnity(record::unity_render_);
-
 
   // connect unity
   record::connectUnity();
