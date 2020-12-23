@@ -144,8 +144,7 @@ polynomial_trajectories::PolynomialTrajectory record::createOwnSnap(
   double desired_speed_in = 1.0;
   for (int i = 0; i < waypoints_in.size() - 1; i++) {
     segment_times_in[i] =
-      (waypoints_in.at(i + 1) - waypoints_in.at(i)).norm() /
-      desired_speed_in;
+      (waypoints_in.at(i + 1) - waypoints_in.at(i)).norm() / desired_speed_in;
     ROS_INFO_STREAM("seg time: " << segment_times_in[i]);
   }
   Eigen::VectorXd minimization_weights_in(4);
@@ -212,9 +211,12 @@ int main(int argc, char* argv[]) {
   // Settings
   bool rotate = false;
   bool trajectory_rotation = false;
-  bool position_trajectory = true;
+  bool position_trajectory;
   bool ring_traj = false;
   int scene;
+  double cp;
+  double cm;
+  float time_for_rotation;
   std::string which_trajectory;
   pnh.getParam("/rosbag/rotate", rotate);
   pnh.getParam("/rosbag/trajectory_rotation", trajectory_rotation);
@@ -223,6 +225,11 @@ int main(int argc, char* argv[]) {
   pnh.getParam("/rosbag/ring_traj", ring_traj);
   pnh.getParam("/rosbag/scene_id", scene);
   pnh.getParam("/rosbag/trajectory", which_trajectory);
+  pnh.getParam("/rosbag/cp", cp);
+  pnh.getParam("/rosbag/cm", cm);
+  pnh.getParam("/rosbag/time_for_rotation", time_for_rotation);
+
+
   record::scene_id_ = scene;
 
   // quad initialization
@@ -272,16 +279,16 @@ int main(int argc, char* argv[]) {
   record::event_camera_->setRelPose(B_r_BC, R_BC);
   record::event_camera_->setCp(0.1);
   record::event_camera_->setCm(0.1);
-  record::event_camera_->setsigmaCm(0.0);
-  record::event_camera_->setsigmaCp(0.0);
+  record::event_camera_->setsigmaCm(cp);
+  record::event_camera_->setsigmaCp(cm);
   record::event_camera_->setRefractory(1);
   record::event_camera_->setLogEps(0.0001);
 
   record::quad_ptr_->addEventCamera(record::event_camera_);
 
 
-  double cp = record::event_camera_->getCp();
-  double cm = record::event_camera_->getCm();
+  // double cp = record::event_camera_->getCp();
+  // double cm = record::event_camera_->getCm();
   bool record = false;
   // // initialization
   record::quad_state_.setZero();
@@ -386,9 +393,7 @@ int main(int argc, char* argv[]) {
       record::quad_state_.x[QS::POSY] = (Scalar)desired_pose.position.y();
       record::quad_state_.x[QS::POSZ] = (Scalar)desired_pose.position.z();
 
-    }
-
-    else {
+    } else {
       record::quad_state_.x[QS::POSX] = position_vec.at(0);
       record::quad_state_.x[QS::POSY] = position_vec.at(1);
       record::quad_state_.x[QS::POSZ] = position_vec.at(2);
@@ -399,10 +404,12 @@ int main(int argc, char* argv[]) {
       record::quad_state_.x[QS::ATTY] = (Scalar)desired_pose.orientation.y();
       record::quad_state_.x[QS::ATTZ] = (Scalar)desired_pose.orientation.z();
     } else if (rotate) {
-      record::quad_state_.x[QS::ATTW] = 1.0;
+      record::quad_state_.x[QS::ATTW] = std::cos(
+        record::event_camera_->getSecSimTime() * 3.1415 / time_for_rotation);
       record::quad_state_.x[QS::ATTX] = 0.0;
       record::quad_state_.x[QS::ATTY] = 0.0;
-      record::quad_state_.x[QS::ATTZ] = 0.0;
+      record::quad_state_.x[QS::ATTZ] = std::sin(
+        record::event_camera_->getSecSimTime() * 3.1425 / time_for_rotation);
     } else {
       record::quad_state_.x[QS::ATTW] = 1.0;
       record::quad_state_.x[QS::ATTX] = 0.0;
@@ -443,7 +450,7 @@ int main(int argc, char* argv[]) {
 
     sensor_msgs::ImagePtr rgb_msg =
       cv_bridge::CvImage(std_msgs::Header(), "32FC1", depth_image).toImageMsg();
-          record::rgb_pub_.publish(rgb_msg);
+    record::rgb_pub_.publish(rgb_msg);
 
     RGBImagePtr rgb_img_ptr = std::make_shared<RGBImage>(ev_image);
     RGBImagePtr of_img_ptr = std::make_shared<RGBImage>(of_image);
