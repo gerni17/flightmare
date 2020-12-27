@@ -404,11 +404,11 @@ int main(int argc, char* argv[]) {
       record::quad_state_.x[QS::ATTY] = (Scalar)desired_pose.orientation.y();
       record::quad_state_.x[QS::ATTZ] = (Scalar)desired_pose.orientation.z();
     } else if (rotate) {
-      record::quad_state_.x[QS::ATTW] = std::cos(
+      record::quad_state_.x[QS::ATTW] =std::cos(record::event_camera_->getSecSimTime()*0.1)* std::cos(
         record::event_camera_->getSecSimTime() * 3.1415 / time_for_rotation);
       record::quad_state_.x[QS::ATTX] = 0.0;
       record::quad_state_.x[QS::ATTY] = 0.0;
-      record::quad_state_.x[QS::ATTZ] = std::sin(
+      record::quad_state_.x[QS::ATTZ] =std::cos(record::event_camera_->getSecSimTime()*0.1)* std::sin(
         record::event_camera_->getSecSimTime() * 3.1425 / time_for_rotation);
     } else {
       record::quad_state_.x[QS::ATTW] = 1.0;
