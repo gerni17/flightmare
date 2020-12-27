@@ -1,7 +1,7 @@
 record:
   single_position:
-    - 1.0
-    - 0.0
+    - -1.0
+    - 17.0
     - 1.0
   single_orientation:
     - 0.0
