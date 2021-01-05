@@ -406,6 +406,9 @@ int main(int argc, char* argv[]) {
     } else if (rotate) {
       record::quad_state_.x[QS::ATTW] =2*std::cos(record::event_camera_->getSecSimTime()*0.1)* std::cos(
         record::event_camera_->getSecSimTime() * 3.1415 / time_for_rotation);
+        // should be changing velocity and directions
+      //       record::quad_state_.x[QS::ATTZ] =-std::cos(100*record::event_camera_->getSecSimTime())* std::sin(
+      // record::event_camera_->getSecSimTime()* record::event_camera_->getSecSimTime() * 3.1425 / time_for_rotation);
       record::quad_state_.x[QS::ATTX] = 0.0;
       record::quad_state_.x[QS::ATTY] = 0.0;
       record::quad_state_.x[QS::ATTZ] =2*std::cos(record::event_camera_->getSecSimTime()*0.1)* std::sin(
