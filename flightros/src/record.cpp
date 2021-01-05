@@ -414,10 +414,10 @@ int main(int argc, char* argv[]) {
       record::quad_state_.x[QS::ATTZ] =2*std::cos(record::event_camera_->getSecSimTime()*0.1)* std::sin(
         record::event_camera_->getSecSimTime() * 3.1425 / time_for_rotation);
     } else {
-      record::quad_state_.x[QS::ATTW] = 1.0;
-      record::quad_state_.x[QS::ATTX] = 0.0;
-      record::quad_state_.x[QS::ATTY] = 0.0;
-      record::quad_state_.x[QS::ATTZ] = 0.0;
+      record::quad_state_.x[QS::ATTW] = orientation_vec.at(3);
+      record::quad_state_.x[QS::ATTX] = orientation_vec.at(0);
+      record::quad_state_.x[QS::ATTY] = orientation_vec.at(1);
+      record::quad_state_.x[QS::ATTZ] = orientation_vec.at(2);
     }
 
     traj_pub_.publish(path);
