@@ -33,9 +33,4 @@
   <depend>rosbag</depend>
   <depend>dvs_msgs</depend>
   <!-- <depend>minkindr</depend> -->
-
-
-
-
-
 </package>

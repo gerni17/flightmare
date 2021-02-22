@@ -1,9 +1,6 @@
 #pragma once
 #include <ros/ros.h>
-
 #include <flightlib/common/types.hpp>
-// #include <pcl_ros/point_cloud.h>
-// #include <pcl/point_types.h>
 #include <sensor_msgs/Image.h>
 #include <dvs_msgs/EventArray.h>
 #include <geometry_msgs/PoseStamped.h>
@@ -11,11 +8,9 @@
 #include <sensor_msgs/Imu.h>
 #include <sensor_msgs/CameraInfo.h>
 
-// #include <esim_msgs/OpticFlow.h>
 using namespace flightlib;
 
 namespace flightros {
-
 inline std::string getTopicName(int i, const std::string& suffix)
 {
   std::stringstream ss;
@@ -37,19 +32,9 @@ inline ros::Time toRosTime(int64_t t)
   return ros_time;
 }
 
-
 void imageToMsg(const cv::Mat_<ImageFloatType>& image, int64_t t, sensor_msgs::ImagePtr& msg);
 void imageToMsg(const cv::Mat& image, int64_t t, sensor_msgs::ImagePtr& msg);
 void imageFloatToMsg(const cv::Mat& image, int64_t t, sensor_msgs::ImagePtr& msg);
-
-
 void eventsToMsg(const EventsVector& events, int width, int height, dvs_msgs::EventArrayPtr& msg, int64_t starting_time);
 
-// sensor_msgs::Imu imuToMsg(const Vector3& acc, const Vector3& gyr, Time t);
-
-// geometry_msgs::TwistStamped twistToMsg(const AngularVelocity& w, const LinearVelocity& v, int64_t t);
-
-// void cameraToMsg(const ze::Camera::Ptr& camera, Time t, sensor_msgs::CameraInfoPtr& msg);
-
-
-} // namespace event_camera_simulator
+} // namespace flightros

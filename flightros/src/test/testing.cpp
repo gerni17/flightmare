@@ -1,8 +1,5 @@
 #include "flightros/testing.hpp"
 
-// DEFINE_string(path_to_output_bag, "",
-// "Path to which save the output bag file.");
-
 bool testing::setUnity(const bool render) {
   unity_render_ = render;
   if (unity_render_ && unity_bridge_ptr_ == nullptr) {
@@ -20,6 +17,7 @@ bool testing::connectUnity() {
   return unity_ready_;
 }
 
+// return image type
 std::string testing::type2str(int type) {
   std::string r;
 
@@ -58,10 +56,9 @@ std::string testing::type2str(int type) {
 
   return r;
 }
+// saves the events into a .txt file
 void testing::saveToFile(std::vector<Event_t> events) {
-  // CHECK_EQ(events.size(), 1);
   for (const Event_t& e : events) {
-    // rearrange?
     if (e.polarity != 0) {
       testing::events_text_file_ << e.time << " " << e.coord_x << " "
                                  << e.coord_y << " " << e.polarity << std::endl;
@@ -88,7 +85,7 @@ int main(int argc, char* argv[]) {
   // Flightmare
   Vector<3> B_r_BC(0.0, 0.0, 0.3);
   Matrix<3, 3> R_BC = Quaternion(1.0, 0.0, 0.0, 0.0).toRotationMatrix();
-  // std::cout << R_BC << std::endl;
+  // initialize rgb camera
   testing::rgb_camera_->setFOV(83);
   testing::rgb_camera_->setWidth(512);
   testing::rgb_camera_->setHeight(352);
@@ -96,6 +93,10 @@ int main(int argc, char* argv[]) {
   testing::rgb_camera_->setPostProcesscing(
     std::vector<bool>{true, false, true});  // depth, segmentation, optical flow
   testing::quad_ptr_->addRGBCamera(testing::rgb_camera_);
+  
+  // initialize event camera, careful with the image size.
+  // h,w should be a mutliple of 8 otherwise the thread groups in the compute 
+  // shader need to be adapted
   testing::event_camera_->setFOV(83);
   testing::event_camera_->setWidth(512);
   testing::event_camera_->setHeight(352);
@@ -106,9 +107,9 @@ int main(int argc, char* argv[]) {
   testing::event_camera_->setsigmaCp(0.0);
   testing::event_camera_->setRefractory(1);
   testing::event_camera_->setLogEps(0.0001);
-
   testing::quad_ptr_->addEventCamera(testing::event_camera_);
 
+  // scene can be changed 
   // testing::scene_id_ = 1;
   double cp = testing::event_camera_->getCp();
   double cm = testing::event_camera_->getCm();
@@ -117,23 +118,7 @@ int main(int argc, char* argv[]) {
   testing::quad_state_.setZero();
   testing::quad_ptr_->reset(testing::quad_state_);
 
-  // Initialize gates
-  std::string object_id = "unity_gate";
-  std::string prefab_id = "rpg_gate";
-  std::shared_ptr<StaticGate> gate_1 =
-    std::make_shared<StaticGate>(object_id, prefab_id);
-  gate_1->setPosition(Eigen::Vector3f(0, 10, 2.5));
-  gate_1->setRotation(
-    Quaternion(std::cos(0.5 * M_PI_2), 0.0, 0.0, std::sin(0.5 * M_PI_2)));
-
-  std::string object_id_2 = "unity_gate_2";
-  std::shared_ptr<StaticGate> gate_2 =
-    std::make_unique<StaticGate>(object_id_2, prefab_id);
-  gate_2->setPosition(Eigen::Vector3f(0, -10, 2.5));
-  gate_2->setRotation(
-    Quaternion(std::cos(0.5 * M_PI_2), 0.0, 0.0, std::sin(0.5 * M_PI_2)));
-
-  // ROS
+  // ROS publishers for control
   testing::rgb_pub_ =
     my_image_transport.advertise("camera/antialiasing_rgb", 1);
   testing::rgb_rgb_pub_ = my_image_transport.advertise("camera/rgb", 1);
@@ -142,21 +127,16 @@ int main(int argc, char* argv[]) {
   testing::of_pub_ = my_image_transport.advertise("camera/of", 1);
   testing::depth_pub_ = my_image_transport.advertise("camera/depth", 1);
 
-
   testing::writer_ = std::make_shared<RosbagWriter>(
     testing::path_to_output_bag, testing::event_camera_->getMicroSimTime());
 
   // Set unity bridge
   testing::setUnity(testing::unity_render_);
 
-  // Add gates
-  // testing::unity_bridge_ptr_->addStaticObject(gate_1);
-  // testing::unity_bridge_ptr_->addStaticObject(gate_2);
-
   // connect unity
   testing::connectUnity();
 
-  // Define path through gates
+  // Define path 
   std::vector<Eigen::Vector3d> way_points;
   way_points.push_back(Eigen::Vector3d(0, 10, 2.5));
   way_points.push_back(Eigen::Vector3d(5, 0, 2.5));
@@ -179,25 +159,20 @@ int main(int argc, char* argv[]) {
                                         20.0, 20.0, 6.0);
 
   testing::events_text_file_.open("/home/gian/Desktop/events");
+
   // Start testing
-
-
   bool is_first_image = true;
   Image I, L, L_reconstructed, L_last;
-  // int64_t stamp;
+
   int frame = 0;
-  // reconstructed_image.convertTo(reconstructed_image, CV_64FC1);
-  ROS_INFO_STREAM("Cp value " << cp);
-  float time__ = 0;
+  float time_ = 0;
   while (ros::ok() && testing::unity_render_ && testing::unity_ready_ &&
          frame < 200) {
-    // timer.stop();
 
     quadrotor_common::TrajectoryPoint desired_pose =
       polynomial_trajectories::getPointFromTrajectory(trajectory,
-                                                      ros::Duration(time__));
-    ROS_INFO_STREAM("pose time " << time__);
-
+                                                      ros::Duration(time_));
+    ROS_INFO_STREAM("pose time " << time_);
     testing::quad_state_.x[QS::POSX] = (Scalar)desired_pose.position.x();
     testing::quad_state_.x[QS::POSY] = (Scalar)desired_pose.position.y();
     testing::quad_state_.x[QS::POSZ] = (Scalar)desired_pose.position.z();
@@ -211,72 +186,61 @@ int main(int argc, char* argv[]) {
     tcv.getRotation() = ze::Quaternion(
       testing::quad_state_.x[QS::ATTW], testing::quad_state_.x[QS::ATTX],
       testing::quad_state_.x[QS::ATTY], testing::quad_state_.x[QS::ATTZ]);
-    // tcv.getRotation() = ze::Quaternion( testing::quad_ptr_->getQuaternion());
-
     tcv.getPosition() = ze::Position((Scalar)desired_pose.position.x(),
                                      (Scalar)desired_pose.position.y(),
                                      (Scalar)desired_pose.position.z());
-    // ze::Position(FLAGS_renderer_plane_x, FLAGS_renderer_plane_y,
-    //              FLAGS_renderer_plane_z);
-
-    // testing::writer_->poseCallback(tcv,
-    //                                testing::event_camera_->getSecSimTime());
-
-    ROS_INFO_STREAM("time " << testing::event_camera_->getSecSimTime());
-
     testing::quad_ptr_->setState(testing::quad_state_);
-
-        ROS_INFO_STREAM("time " << testing::event_camera_->getSecSimTime());
+    ROS_INFO_STREAM("time " << testing::event_camera_->getSecSimTime());
 
     testing::unity_bridge_ptr_->getRender(0);
-    ROS_INFO_STREAM("time " << testing::event_camera_->getSecSimTime());
     testing::unity_bridge_ptr_->handleOutput(true);
-    ROS_INFO_STREAM("time " << testing::event_camera_->getSecSimTime());
-ROS_INFO_STREAM("time ") ;
-    // add image to addin events
 
+    //make some checks
     cv::Mat new_image, rgb_img, of_img, depth_img;
     testing::event_camera_->getRGBImage(new_image);
-    // ROS_INFO_STREAM("New image val1 " << new_image.at<cv::Vec3b>(100, 100));
+
+    // publish rgb image
     sensor_msgs::ImagePtr rgb_msg =
       cv_bridge::CvImage(std_msgs::Header(), "bgr8", new_image).toImageMsg();
     testing::rgb_pub_.publish(rgb_msg);
-    cv::cvtColor(new_image, new_image, CV_BGR2GRAY);
 
-    // publishin rgb image without antialiasing
+
+    // publish rgb image without antialiasing
     testing::rgb_camera_->getRGBImage(rgb_img);
     sensor_msgs::ImagePtr rrgb_msg =
       cv_bridge::CvImage(std_msgs::Header(), "bgr8", rgb_img).toImageMsg();
     testing::rgb_rgb_pub_.publish(rrgb_msg);
 
+    // publish event image
     cv::Mat ev_img = testing::event_camera_->createEventimages();
-
     sensor_msgs::ImagePtr ev_msg =
       cv_bridge::CvImage(std_msgs::Header(), "bgr8", ev_img).toImageMsg();
     testing::event_pub_.publish(ev_msg);
-    // ROS_INFO_STREAM("Type_ " << testing::type2str(new_image.type()));
-    bool was_of_empty = testing::rgb_camera_->getOpticalFlow(of_img);
 
+    // publish OF image
+    bool was_of_empty = testing::rgb_camera_->getOpticalFlow(of_img);
     sensor_msgs::ImagePtr of_msg =
       cv_bridge::CvImage(std_msgs::Header(), "bgr8", of_img).toImageMsg();
     testing::of_pub_.publish(of_msg);
+
+    // publish depth image
     bool was_depth_empty = testing::rgb_camera_->getDepthMap(depth_img);
     sensor_msgs::ImagePtr depth_msg =
       cv_bridge::CvImage(std_msgs::Header(), "32FC1", depth_img).toImageMsg();
     testing::depth_pub_.publish(depth_msg);
-    ROS_INFO_STREAM("recieved of and dept " << was_of_empty << " / "
-                                            << was_depth_empty);
 
+    ROS_INFO_STREAM("recieved OF and depth " << was_of_empty << " / "<< was_depth_empty);
     ROS_INFO_STREAM("new image type " << testing::type2str(of_img.type()));
 
-    // ROS_WARN_STREAM("New image val2 " << new_image.at<uint>(100, 100));
+    // coonvert rgb image to gray
+    cv::cvtColor(new_image, new_image, CV_BGR2GRAY);
     new_image.convertTo(I, cv::DataType<ImageFloatType>::type, 1. / 255.);
-    // ROS_WARN_STREAM("New image val3 " << I.at<float>(100, 100));
 
     // calculate the events to test
     Image dummie =
       cv::Mat::zeros(I.rows, I.cols, cv::DataType<ImageFloatType>::type);
 
+    // convert image to log image
     Image log_img;
     cv::log(I + 0.0001, log_img);
 
@@ -313,30 +277,13 @@ ROS_INFO_STREAM("time ") ;
         } else
           pol = 0;
 
-        // ROS_INFO_STREAM("Polarity  " << pol);
-        // const ImageFloatType C = e.polarity ? cp : cm;
-        // if (frame>6) {
-        //   ROS_INFO_STREAM("Values before: "
-        //                   << L(e.coord_y, e.coord_x) << " and recons "
-        //                   << L_reconstructed(e.coord_y, e.coord_x)
-        //                   << " polarity " << e.polarity << " at " <<
-        //                   e.coord_y
-        //                   << "/" << e.coord_x << " at frame " << frame);
-        // }
         L_reconstructed(e.coord_y, e.coord_x) += pol * cp;
-        // if (!first_check) {
-        // ROS_INFO_STREAM(
-        //   "Values after: "<< L_reconstructed(e.coord_y, e.coord_x)<<" at
-        //   "<<e.coord_y<<"/"<<e.coord_x);
-        // }
         event_image(e.coord_y, e.coord_x) += pol * cp;
 
         if (first_check) {
           ROS_INFO_STREAM("Time of first event: " << e.time);
           first_check = false;
         }
-        // ROS_INFO_STREAM(
-        // "Values after: " << L_reconstructed(e.coord_y, e.coord_x))
       }
     }
 
@@ -344,14 +291,12 @@ ROS_INFO_STREAM("time ") ;
                                              << " of " << counter_);
 
     const EventsVector& events = testing::event_camera_->getEvents();
-    // testing::writer_->eventsCallback(events,
-    // testing::event_camera_->getMicroSimTime());
-    ROS_INFO_STREAM("should work ");
-
     testing::saveToFile(testing::event_camera_->getEvents());
     // clear the buffer
     testing::event_camera_->deleteEventQueue();
-    // Here all informations are gathered and we only need to evaluate it
+
+    //  starting evaluations
+    // total error
     ImageFloatType total_error = 0;
     for (int y = 0; y < I.rows; ++y) {
       for (int x = 0; x < I.cols; ++x) {
@@ -384,22 +329,21 @@ ROS_INFO_STREAM("time ") ;
 
     ROS_INFO_STREAM("True means " << true_mean
                                   << ", error mean : " << true_error_mean);
-    // clculate std deviation and mean of the error
+
+    // compute std deviation and mean of the error
     Image error, real_diff;
     cv::absdiff(L_reconstructed, L, error);
     cv::absdiff(L, L_last, real_diff);
 
 
-    // ROS_INFO_STREAM("Type " << testing::type2str(error.type()));
     double minVal, maxVal, minVal_, maxVal_;
     cv::Point max, min, max_, min_;
     cv::minMaxLoc(error, &minVal, &maxVal, &min, &max);
     cv::minMaxLoc(real_diff, &minVal_, &maxVal_, &min_, &max_);
-    // publish the two iamge
+
+    // publish the two images
     cv::Mat draw;
     error.convertTo(draw, CV_8U, 255.0 / (maxVal - minVal), -minVal);
-    // ROS_INFO_STREAM("Type " << testing::type2str(error.type()));
-
     sensor_msgs::ImagePtr diff_msg =
       cv_bridge::CvImage(std_msgs::Header(), "mono8", draw).toImageMsg();
     testing::diff_pub_.publish(diff_msg);
@@ -420,20 +364,16 @@ ROS_INFO_STREAM("time ") ;
                     << maxVal << " and " << minVal << " at " << max.y << "/"
                     << max.x);
 
-    if (frame > 10) {
+    // setup variables for next rendering
+    if (frame < 10 || frame % 1 == 0) L_reconstructed = L.clone();
+    else if (frame > 10) {
       times.push_back(frame);
       mean_errors.push_back(mean_error[0]);
       stddev_errors.push_back(stddev_error[0]);
     }
-
-
-    if (frame < 10 || frame % 1 == 0) L_reconstructed = L.clone();
-
     L_last = L.clone();
 
-    time__ += 0.001;
-
-    // create plot
+    time_ += 0.001;
     frame++;
   }
   // Plot the mean and stddev reconstruction error over time
@@ -446,7 +386,6 @@ ROS_INFO_STREAM("time ") ;
   ze::plt::xlabel("Time (s)");
   ze::plt::ylabel("Mean / Stddev reconstruction error");
   ze::plt::grid(true);
-  // ze::plt::save("~/Desktop/evolution_reconstruction_error.pdf");
   ze::plt::show();
   testing::events_text_file_.close();
   return 0;

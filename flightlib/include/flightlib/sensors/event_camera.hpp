@@ -23,7 +23,6 @@ struct Event {
   float time;
 };
 
-
 class EventCamera : SensorBase {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -49,16 +48,12 @@ class EventCamera : SensorBase {
   int64_t getMicroTime();
   int64_t getNanoSimTime();
 
-
-  // bool setDepthScale(const Scalar depth_scale);
-  // bool setPostProcesscing(const std::vector<bool>& enabled_layers);
   bool feedImageQueue(const cv::Mat& image_mat);
   bool feedEventImageQueue(const cv::Mat& image_mat);
-  bool feedEventQueue( std::vector<Event_t>& events);
+  bool feedEventQueue(std::vector<Event_t>& events);
   bool deleteEventQueue();
 
   // public get functions
-  // std::vector<bool> getEnabledLayers(void) const;
   Matrix<4, 4> getRelPose(void) const;
   int getChannels(void) const;
   int getWidth(void) const;
@@ -75,19 +70,9 @@ class EventCamera : SensorBase {
 
   // Scalar getDepthScale(void) const;
   bool getRGBImage(cv::Mat& rgb_img);
-  // bool getDepthMap(cv::Mat& depth_map);
-  // bool getSegmentation(cv::Mat& segmentation);
-  // bool getOpticalFlow(cv::Mat& opticalflow);
   bool getEventImages(cv::Mat& image_mat);
   std::vector<Event_t> getEvents();
   cv::Mat createEventimages();
-  // bool getEvents(std::vector<Event>& events);
-
-
-  // auxiliary functions
-  // void enableDepth(const bool on);
-  // void enableOpticalFlow(const bool on);
-  // void enableSegmentation(const bool on);
 
  private:
   Logger logger_{"RBGCamera"};
@@ -103,9 +88,9 @@ class EventCamera : SensorBase {
   float sigma_cm_;
   int64_t refractory_period_ns_;
   float log_eps_;
-  // Scalar depth_scale_;
+
   int64_t sim_time = 0;
-  int64_t delta_time =0;
+  int64_t delta_time = 0;
   int64_t real_time;
 
 
@@ -122,15 +107,7 @@ class EventCamera : SensorBase {
   std::deque<std::vector<Event_t>> event_queue_;
   std::vector<Event_t> event_queue_for_img;
   std::vector<Event_t> event_queue_for_test;
-    std::vector<Event_t> event_queue_sum;
-
-  bool store_image_=false;
-
-  // std::deque<cv::Mat> opticalflow_queue_;
-  // std::deque<flightlib::Event> event_queue_;
-
-  // [depth, segmentation, optical flow]
-  // std::vector<bool> enabled_layers_;
+  std::vector<Event_t> event_queue_sum;
+  bool store_image_ = false;
 };
-
 }  // namespace flightlib

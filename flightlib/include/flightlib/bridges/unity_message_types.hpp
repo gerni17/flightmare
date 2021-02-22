@@ -79,8 +79,6 @@ struct EventCamera_t {
                            0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
 };
 
-
-
 struct Lidar_t {
   std::string ID;
   int num_beams{10};
@@ -123,8 +121,6 @@ struct Object_t {
 struct SettingsMessage_t {
   // scene/render settings
   size_t scene_id = UnityScene::WAREHOUSE;
-
-  //
   std::vector<Vehicle_t> vehicles;
   std::vector<Object_t> objects;
 };
@@ -142,9 +138,7 @@ struct Sub_Vehicle_t {
 };
 
 struct SubMessage_t {
-  //
   FrameID frame_id{0};
-  //
   std::vector<Sub_Vehicle_t> sub_vehicles;
 };
 
@@ -254,13 +248,6 @@ inline void from_json(const json &j, Event_t &o) {
   o.polarity = j.at("polarity").get<int>();
   o.time = j.at("time").get<float>();
 }
-
-// inline void from_json(const json &j, std::vector<Event_t> &o) {
-//   o.event_t = j.at("Event_t").get<Event_t>();
-//   // o.coord_y = j.at("coord_y").get<int>();
-//   // o.polarity = j.at("polarity").get<int>();
-//   // o.time = j.at("time").get<float>();
-// }
 
 inline void from_json(const json &j, EventsMessage_t &o) {
   o.events = j.at("events").get<std::vector<Event_t>>();

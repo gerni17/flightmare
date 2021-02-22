@@ -74,7 +74,6 @@ class UnityBridge {
  private:
   bool initializeConnections(void);
 
-  //
   SettingsMessage_t settings_;
   PubMessage_t pub_msg_;
   Logger logger_{"UnityBridge"};

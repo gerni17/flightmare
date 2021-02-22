@@ -6,7 +6,6 @@ find_package(catkin_simple REQUIRED)
 
 find_package(OpenCV REQUIRED)
 
-
 catkin_simple()
 
 catkin_package(
@@ -35,7 +34,6 @@ SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17")
 SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DEIGEN_STACK_ALLOCATION_LIMIT=1048576")
 add_compile_options(-O3)
 
-
 # Setup Release and Debug flags
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS} ${CMAKE_CXX_ARCH_FLAGS} -Wall -DNDEBUG -fPIC")
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS} -Wall -g")
@@ -46,51 +44,9 @@ cs_add_library(ros_utils
     src/ros_utils.cpp
 )
 
-# target_link_libraries(ros_utils
-# ${catkin_LIBRARIES}
-# ${OpenCV_LIBRARIES}
-# stdc++fs
-
-# )
 cs_add_library(rosbag_writer
 src/rosbag_writer.cpp
 )
-
-# target_link_libraries(rosbag_writer
-# ${catkin_LIBRARIES}
-# # ${OpenCV_LIBRARIES}
-# minkindr_conversions
-# # stdc++fs
-# )
-
-#pilot
-
-cs_add_library(flight_pilot
-    src/flight_pilot.cpp
-)
-
-target_link_libraries(flight_pilot
-${catkin_LIBRARIES}
-${OpenCV_LIBRARIES}
-stdc++fs
-zmq
-zmqpp
-)
-
-cs_add_executable(flight_pilot_node
-   src/flight_pilot_node.cpp
-)
-
-target_link_libraries(flight_pilot_node
-flight_pilot
-${catkin_LIBRARIES}
-${OpenCV_LIBRARIES}
-stdc++fs
-zmq
-zmqpp
-)
-
-
 
 cs_add_executable(testing
 src/test/testing.cpp)
@@ -118,9 +74,6 @@ target_link_libraries(record
     zmq
     zmqpp
 )
-
-
-
 
 # Finish
 cs_install()

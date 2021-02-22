@@ -1,8 +1,5 @@
 #include "flightros/record.hpp"
 
-// DEFINE_string(path_to_output_bag, "",
-// "Path to which save the output bag file.");
-
 bool record::setUnity(const bool render) {
   unity_render_ = render;
   if (unity_render_ && unity_bridge_ptr_ == nullptr) {
@@ -41,7 +38,7 @@ void record::samplePolynomial(
       polynomial, time_from_start));
     time_from_start += dt;
   }
-  ROS_INFO_STREAM("From start at end." << time_from_start);
+  ROS_INFO_STREAM("From start to end." << time_from_start);
 
   trajectory.points.push_back(polynomial.end_state);
 
@@ -99,7 +96,6 @@ void record::createMinSnap(const std::vector<Eigen::Vector3d> waypoints,
     ROS_INFO_STREAM("seg time" << segment_times[i]);
   }
   Eigen::VectorXd minimization_weights(4);
-  //  minimization_weights << 0.1, 10.0, 100.0, 100.0;
   minimization_weights << 0.0, 0.0, 0.0, 100.0;
   double sampling_freq = 50.0;
   quadrotor_common::TrajectoryPoint start_state;
@@ -109,7 +105,6 @@ void record::createMinSnap(const std::vector<Eigen::Vector3d> waypoints,
     0.05;  // hack to get a smooth heading trajectory at the beginning
   quadrotor_common::TrajectoryPoint end_state;
   end_state.position = waypoints.back();
-  // maybe the problem lies in the time from start
   std::vector<Eigen::Vector3d> waypoints_no_start_end = waypoints;
   waypoints_no_start_end.erase(waypoints_no_start_end.begin());
   waypoints_no_start_end.pop_back();
@@ -135,20 +130,14 @@ void record::createMinSnap(const std::vector<Eigen::Vector3d> waypoints,
 polynomial_trajectories::PolynomialTrajectory record::createOwnSnap(
   const std::vector<Eigen::Vector3d> waypoints_in,
   Eigen::VectorXd segment_times_in) {
-  // identify the segment times
-  // Eigen::VectorXd segment_times_in =
-  // Eigen::VectorXd::Ones(waypoints_in.size() - 1);
-  // Eigen::VectorXd segment_times_in(waypoints_in.size() - 1);
-  // segment_times_in << 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0,
-  //   100.0, 100.0, 100.0, 100.0;
   double desired_speed_in = 1.0;
   for (int i = 0; i < waypoints_in.size() - 1; i++) {
     segment_times_in[i] =
       (waypoints_in.at(i + 1) - waypoints_in.at(i)).norm() / desired_speed_in;
     ROS_INFO_STREAM("seg time: " << segment_times_in[i]);
   }
+
   Eigen::VectorXd minimization_weights_in(4);
-  //  minimization_weights << 0.1, 10.0, 100.0, 100.0;
   minimization_weights_in << 0.0, 0.0, 0.0, 100.0;
   double sampling_freq_in = 50.0;
   quadrotor_common::TrajectoryPoint start_state_in;
@@ -174,7 +163,6 @@ polynomial_trajectories::PolynomialTrajectory record::createOwnSnap(
   double max_collective_thrust_in = 20.0;
   double max_roll_pitch_rate_in = 3.0;
 
-
   polynomial_trajectories::PolynomialTrajectory trajectory_in =
     polynomial_trajectories::minimum_snap_trajectories::
       generateMinimumSnapTrajectory(
@@ -184,20 +172,14 @@ polynomial_trajectories::PolynomialTrajectory record::createOwnSnap(
   return trajectory_in;
 }
 
-
 void record::saveToFile(std::vector<Event_t> events) {
-  // CHECK_EQ(events.size(), 1);
   for (const Event_t& e : events) {
-    // rearrange?
     if (e.polarity != 0) {
       record::events_text_file_ << e.time << " " << e.coord_x << " "
                                 << e.coord_y << " " << e.polarity << std::endl;
     }
   }
 }
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
 
 int main(int argc, char* argv[]) {
   // initialize ROS
@@ -218,6 +200,7 @@ int main(int argc, char* argv[]) {
   double cm;
   float time_for_rotation;
   std::string which_trajectory;
+  // pull nitialization param from param server
   pnh.getParam("/rosbag/rotate", rotate);
   pnh.getParam("/rosbag/trajectory_rotation", trajectory_rotation);
   pnh.getParam("/rosbag/position_trajectory", position_trajectory);
@@ -234,6 +217,7 @@ int main(int argc, char* argv[]) {
 
   // quad initialization
   record::quad_ptr_ = std::make_unique<Quadrotor>();
+
   // add camera
   record::rgb_camera_ = std::make_unique<RGBCamera>();
   record::event_camera_ = std::make_unique<EventCamera>();
@@ -257,7 +241,6 @@ int main(int argc, char* argv[]) {
   pnh.getParam(which_trajectory + "/y", waypts_y);
   pnh.getParam(which_trajectory + "/z", waypts_z);
 
-  // ROS_WARNING_STREAM("numbr of waypoints: "<<waypts_z.size());
   ROS_INFO_STREAM("writing to rosbag: " << record::path_to_output_bag);
 
 
@@ -265,7 +248,6 @@ int main(int argc, char* argv[]) {
   // Flightmare
   Vector<3> B_r_BC(0.0, 0.0, 0.3);
   Matrix<3, 3> R_BC = Quaternion(1.0, 0.0, 0.0, 0.0).toRotationMatrix();
-  // std::cout << R_BC << std::endl;
   record::rgb_camera_->setFOV(83);
   record::rgb_camera_->setWidth(512);
   record::rgb_camera_->setHeight(352);
@@ -309,10 +291,9 @@ int main(int argc, char* argv[]) {
 
   quadrotor_common::Trajectory sampled_trajectory_;
 
-
+  // create trajectory ring or not
   if (ring_traj) {
     ROS_WARN_STREAM("Creating RING trajectory");
-    // //   // Define path through gates
     way_points.push_back(Eigen::Vector3d(0, 10, 2.5));
     way_points.push_back(Eigen::Vector3d(5, 0, 2.5));
     way_points.push_back(Eigen::Vector3d(0, -10, 2.5));
@@ -374,13 +355,11 @@ int main(int argc, char* argv[]) {
     desired_path.poses.push_back(pose);
   }
 
-
   cv::Mat new_image, of_image, depth_image, ev_image;
   Image I;
-  ROS_INFO_STREAM("C values " << cp << "/" << cm);
 
   ROS_INFO_STREAM(
-    "========================================================================="
+    "========================================================================"
     "=");
 
   while (ros::ok() && record::unity_render_ && record::unity_ready_) {
@@ -388,6 +367,8 @@ int main(int argc, char* argv[]) {
       polynomial_trajectories::getPointFromTrajectory(
         trajectory_, ros::Duration(record::event_camera_->getSecSimTime()));
 
+    // different options are considered:
+    // pure rotation, pure trnaslation or both
     if (position_trajectory) {
       record::quad_state_.x[QS::POSX] = (Scalar)desired_pose.position.x();
       record::quad_state_.x[QS::POSY] = (Scalar)desired_pose.position.y();
@@ -404,15 +385,17 @@ int main(int argc, char* argv[]) {
       record::quad_state_.x[QS::ATTY] = (Scalar)desired_pose.orientation.y();
       record::quad_state_.x[QS::ATTZ] = (Scalar)desired_pose.orientation.z();
     } else if (rotate) {
-      record::quad_state_.x[QS::ATTW] =2*std::cos(record::event_camera_->getSecSimTime()*0.1)* std::cos(
-        record::event_camera_->getSecSimTime() * 3.1415 / time_for_rotation);
-        // should be changing velocity and directions
-      //       record::quad_state_.x[QS::ATTZ] =-std::cos(100*record::event_camera_->getSecSimTime())* std::sin(
-      // record::event_camera_->getSecSimTime()* record::event_camera_->getSecSimTime() * 3.1425 / time_for_rotation);
+      record::quad_state_.x[QS::ATTW] =
+        2 * std::cos(record::event_camera_->getSecSimTime() * 0.1) *
+        std::cos(record::event_camera_->getSecSimTime() * 3.1415 /
+                 time_for_rotation);
+      // should be changing velocity and directions
       record::quad_state_.x[QS::ATTX] = 0.0;
       record::quad_state_.x[QS::ATTY] = 0.0;
-      record::quad_state_.x[QS::ATTZ] =2*std::cos(record::event_camera_->getSecSimTime()*0.1)* std::sin(
-        record::event_camera_->getSecSimTime() * 3.1425 / time_for_rotation);
+      record::quad_state_.x[QS::ATTZ] =
+        2 * std::cos(record::event_camera_->getSecSimTime() * 0.1) *
+        std::sin(record::event_camera_->getSecSimTime() * 3.1425 /
+                 time_for_rotation);
     } else {
       record::quad_state_.x[QS::ATTW] = orientation_vec.at(3);
       record::quad_state_.x[QS::ATTX] = orientation_vec.at(0);
@@ -420,19 +403,20 @@ int main(int argc, char* argv[]) {
       record::quad_state_.x[QS::ATTZ] = orientation_vec.at(2);
     }
 
+    // publish trajectory for visualization
     traj_pub_.publish(path);
     line_pub_.publish(desired_path);
 
-
+    // define new position and orientation
     ze::Transformation twc;
     record::quad_state_.qx.normalize();
     twc.getRotation() = ze::Quaternion(
       record::quad_state_.x[QS::ATTW], record::quad_state_.x[QS::ATTX],
       record::quad_state_.x[QS::ATTY], record::quad_state_.x[QS::ATTZ]);
-
     twc.getPosition() = ze::Position(record::quad_state_.x[QS::POSX],
                                      record::quad_state_.x[QS::POSY],
                                      record::quad_state_.x[QS::POSZ]);
+    // writ position to rosbag
     record::writer_->poseCallback(twc, record::event_camera_->getNanoSimTime());
 
     ROS_INFO_STREAM("pose " << record::quad_state_.x[QS::POSX] << "/"
@@ -440,12 +424,12 @@ int main(int argc, char* argv[]) {
                             << record::quad_state_.x[QS::POSZ] << "/"
                             << record::event_camera_->getSecSimTime());
 
+    // send state to server
     record::quad_ptr_->setState(record::quad_state_);
-
     record::unity_bridge_ptr_->getRender(0);
     record::unity_bridge_ptr_->handleOutput();
 
-
+    // get images
     record::event_camera_->getRGBImage(ev_image);
     record::rgb_camera_->getRGBImage(new_image);
     record::rgb_camera_->getOpticalFlow(of_image);
@@ -459,13 +443,14 @@ int main(int argc, char* argv[]) {
     RGBImagePtr of_img_ptr = std::make_shared<RGBImage>(of_image);
     RGBImagePtr depth_img_ptr = std::make_shared<RGBImage>(depth_image);
 
+    // triggers for starting recording
     if (frame > 10 && record::event_camera_->getImgStore()) {
       ROS_INFO_STREAM("starting to record");
       record = true;
     }
 
+    // write to rosbag
     if (record) {
-      // add image to addin events
       if (record::event_camera_->getImgStore()) {
         cv::Mat event_img = record::event_camera_->createEventimages();
         RGBImagePtr event_img_ptr = std::make_shared<RGBImage>(event_img);

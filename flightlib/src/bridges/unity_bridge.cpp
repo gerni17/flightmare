@@ -115,12 +115,6 @@ bool UnityBridge::getRender(const FrameID frame_id) {
     pub_msg_.vehicles[idx].rotation = quaternionRos2Unity(quad_state.q());
   }
 
-  // for (size_t idx = 0; idx < pub_msg_.objects.size(); idx++) {
-  //   std::shared_ptr<DynamicGate<T>> gate = unity_dynamic_gate_[object_i.ID];
-  //   pub_msg_.objects[idx].position = positionROS2Unity(gate->getPos());
-  //   pub_msg_.objects[idx].rotation = rotationROS2Unity(gate->getQuat());
-  // }
-
   // create new message object
   zmqpp::message msg;
   // add topic header
@@ -142,12 +136,6 @@ bool UnityBridge::trigggerEvents(const FrameID frame_id) {
     pub_msg_.vehicles[idx].rotation = quaternionRos2Unity(quad_state.q());
   }
 
-  // for (size_t idx = 0; idx < pub_msg_.objects.size(); idx++) {
-  //   std::shared_ptr<DynamicGate<T>> gate = unity_dynamic_gate_[object_i.ID];
-  //   pub_msg_.objects[idx].position = positionROS2Unity(gate->getPos());
-  //   pub_msg_.objects[idx].rotation = rotationROS2Unity(gate->getQuat());
-  // }
-
   // create new message object
   zmqpp::message msg;
   // add topic header
@@ -165,7 +153,6 @@ bool UnityBridge::setScene(const SceneID& scene_id) {
     logger_.warn("Scene ID is not defined, cannot set scene.");
     return false;
   }
-  // logger_.info("Scene ID is set to %d.", scene_id);
   settings_.scene_id = scene_id;
   return true;
 }
@@ -186,7 +173,6 @@ bool UnityBridge::addQuadrotor(std::shared_ptr<Quadrotor> quad) {
 
   // get camera
   std::vector<std::shared_ptr<RGBCamera>> rgb_cameras = quad->getCameras();
-  // size_t cams = 0
   for (size_t cam_idx = 0; cam_idx < rgb_cameras.size(); cam_idx++) {
     std::shared_ptr<RGBCamera> cam = rgb_cameras[cam_idx];
     Camera_t camera_t;
@@ -201,7 +187,6 @@ bool UnityBridge::addQuadrotor(std::shared_ptr<Quadrotor> quad) {
     camera_t.is_depth = false;
     camera_t.output_index = cam_idx;
     vehicle_t.cameras.push_back(camera_t);
-
     // add rgb_cameras
     rgb_cameras_.push_back(rgb_cameras[cam_idx]);
   }
@@ -226,17 +211,13 @@ bool UnityBridge::addQuadrotor(std::shared_ptr<Quadrotor> quad) {
     eventcamera_t.refractory_period_ns =
       event_cameras[cam_idx]->getRefractory();
     eventcamera_t.log_eps = event_cameras[cam_idx]->getLogEps();
-
-
     vehicle_t.eventcameras.push_back(eventcamera_t);
-
     // add event_cameras
     event_cameras_.push_back(event_cameras[cam_idx]);
   }
 
   unity_quadrotors_.push_back(quad);
 
-  //
   settings_.vehicles.push_back(vehicle_t);
   pub_msg_.vehicles.push_back(vehicle_t);
   return true;
@@ -328,8 +309,6 @@ bool UnityBridge::handleOutput(bool always) {
           if (cam.channels == 3) {
             cv::cvtColor(new_image, new_image, CV_RGB2BGR);
           }
-
-
           unity_quadrotors_[idx]
             ->getCameras()[cam.output_index]
             ->feedImageQueue(layer_idx, new_image);
@@ -358,13 +337,10 @@ bool UnityBridge::handleOutput(bool always) {
       // Flip image since OpenCV origin is upper left, but Unity's is lower
       // left.
       cv::flip(new_image, new_image, 0);
-
       // Tell OpenCv that the input is RGB.
       if (cam.channels == 3) {
         cv::cvtColor(new_image, new_image, CV_RGB2BGR);
       }
-
-
       // store events
       std::string json_msg = msg.get(image_i);
       image_i = image_i + 1;
@@ -375,7 +351,6 @@ bool UnityBridge::handleOutput(bool always) {
                 [](const Event_t& a, const Event_t& b) -> bool {
                   return a.time < b.time;
                 });
-
 
       unity_quadrotors_[idx]
         ->getEventCameras()[cam.output_index]

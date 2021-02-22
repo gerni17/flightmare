@@ -1,3 +1,6 @@
+# this file contains all trajectories and position or orientations
+# additional to this file there should be a local.yaml file that is not 
+# tracked by git and which contains user specific information
 record:
   single_position:
     - 1.0

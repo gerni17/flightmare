@@ -5,19 +5,15 @@
 #include <image_transport/image_transport.h>
 #include <ros/ros.h>
 #include <sensor_msgs/Image.h>
-
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
-
 #include "opencv2/imgcodecs.hpp"
-
 #include "flightros/rosbag_writer.hpp"
 #include "flightros/ros_utils.hpp"
 
 
 // standard libraries
 #include <assert.h>
-
 #include <Eigen/Dense>
 #include <chrono>
 #include <cmath>
@@ -60,22 +56,6 @@ using namespace flightros;
 
 namespace testing {
 
-// class manual_timer {
-//   std::chrono::high_resolution_clock::time_point t0;
-//   double timestamp{0.0};
-
-//  public:
-//   void start() { t0 = std::chrono::high_resolution_clock::now(); }
-//   void stop() {
-//     timestamp = std::chrono::duration<double>(
-//                   std::chrono::high_resolution_clock::now() - t0)
-//                   .count() *
-//                 1000.0;
-//   }
-//   const double &get() { return timestamp; }
-// };
-
-// void setupQuad();
 bool setUnity(const bool render);
 bool connectUnity(void);
 std::string type2str(int type);
@@ -85,14 +65,11 @@ void saveToFile(std::vector<Event_t>);
 image_transport::Publisher rgb_pub_;
 image_transport::Publisher diff_pub_;
 image_transport::Publisher rgb_rgb_pub_;
-
 image_transport::Publisher event_pub_;
 image_transport::Publisher of_pub_;
 image_transport::Publisher depth_pub_;
 
-
 cv::Mat rgb_image;
-
 
 // unity quadrotor
 std::shared_ptr<Quadrotor> quad_ptr_;
