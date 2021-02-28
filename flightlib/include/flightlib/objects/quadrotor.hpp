@@ -8,7 +8,6 @@
 #include "flightlib/common/types.hpp"
 #include "flightlib/dynamics/quadrotor_dynamics.hpp"
 #include "flightlib/objects/object_base.hpp"
-#include "flightlib/sensors/event_camera.hpp"
 #include "flightlib/sensors/imu.hpp"
 #include "flightlib/sensors/rgb_camera.hpp"
 
@@ -41,17 +40,13 @@ class Quadrotor : ObjectBase {
   Vector<3> getPosition(void) const;
   Quaternion getQuaternion(void) const;
   std::vector<std::shared_ptr<RGBCamera>> getCameras(void) const;
-  std::vector<std::shared_ptr<EventCamera>> getEventCameras(void) const;
-
   bool getCamera(const size_t cam_id, std::shared_ptr<RGBCamera> camera) const;
-  bool getEventCamera(const size_t cam_id, std::shared_ptr<EventCamera> camera) const;
 
   // public set functions
   bool setState(const QuadState& state);
   bool setCommand(const Command& cmd);
   bool updateDynamics(const QuadrotorDynamics& dynamics);
   bool addRGBCamera(std::shared_ptr<RGBCamera> camera);
-  bool addEventCamera(std::shared_ptr<EventCamera> camera);
 
   // low-level controller
   Vector<4> runFlightCtl(const Scalar sim_dt, const Vector<3>& omega,
@@ -75,7 +70,6 @@ class Quadrotor : ObjectBase {
   IMU imu_;
   std::unique_ptr<IntegratorRK4> integrator_ptr_;
   std::vector<std::shared_ptr<RGBCamera>> rgb_cameras_;
-  std::vector<std::shared_ptr<EventCamera>> event_cameras_;
 
   // quad control command
   Command cmd_;

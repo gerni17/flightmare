@@ -9,5 +9,3 @@ dist
 *.so
 __pycache__
 build
-
-flightros/params/local.yaml
